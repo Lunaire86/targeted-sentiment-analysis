@@ -7,18 +7,18 @@ from typing import Any, Optional, Union
 
 import tensorflow as tf
 
-from src.data.preprocessing import Vocab
-from src.features.embeddings import WordEmbeddings
+from babil.data.preprocessing import Vocab
+from babil.features.embeddings import WordEmbeddings
 
 
-def set_global_seed() -> Optional[Any]:
-    # Ensure reproducibility
-    global_seed: int
-
-    with open('../SEED.txt', 'r') as f:
-        global_seed = int(f.read())
-
-    return tf.random.set_seed(global_seed)
+# def set_global_seed() -> Optional[Any]:
+#     # Ensure reproducibility
+#     global_seed: int
+#
+#     with open('../../SEED', 'r') as f:
+#         global_seed = int(f.read())
+#
+#     return tf.random.set_seed(global_seed)
 
 
 def pickle(obj: Union[Vocab, WordEmbeddings], target_dir: str):

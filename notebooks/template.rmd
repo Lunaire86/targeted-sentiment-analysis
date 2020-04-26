@@ -1,0 +1,120 @@
+---
+title: 'TITLE'
+author: 'Maria Singstad Paulsen'
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output:
+    pdf_document:
+        fig_width: 5
+        fig_height: 3.5
+        df_print: kable
+        highlight: tango
+        # default tango pygments kate monochrome espresso zenburn haddock breezedark
+    fontsize: 12pt
+    # highlight: atelier forest light
+    # highlight: solar
+
+    # LaTeX stuff
+    # documentclass: scrartcl
+    header-includes:
+        - \usepackage{amsmath}
+        - \usepackage{xcolor}
+        - \usepackage{bm}
+
+        # The following lines lets us use the Chancery font with its size altered
+        - \DeclareFontFamily{OT1}{pzc}{}
+        - \DeclareFontShape{OT1}{pzc}{m}{it}{<->s*[1.2] pzcmi7t}{}
+        - \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+        # - \usepackage[dvipsnames]{xcolor}
+---
+
+# Top level headline
+## Next level headline (hehehe)
+
+**This is bold text**
+*and this is italic text*
+
+### A list is written as follows
+* item 1 (`* ' ' text`)
+  * item 1.1 (`'  ' * ' ' text`)
+    * item 1.1.1 (`'    ' * ' ' text`)
+* item 2
+  * item 2.1
+
+If we want an inline equation, we use single `$ ... $` like so: $\{x,\,2x,\,|\,x \in \mathbb{N}\}$, and if we want the big ass one, we use the double dollaz `$$ ... $$`. $\LaTeX$ style, in other words. It's also possible to use the newer versions: `\( ... \)` for inline equations and `\[ ... \]` for centered equations. Mixing the two styles is fine as long as consistency between inline and centered equations is kept. I.e., using `$ ... $` and `\[ ... \]`, but sticking to each of them throughout.
+
+$$ \sum_{i=1}^{N}\binom{N}{i}\,,\quad N=10 $$
+
+\[ \sum_{i=1}^{N}\binom{N}{i}\,,\quad N=10 \]
+
+Add extra linespace using the `\medskip` (LaTeX) command:
+
+\medskip
+
+
+...and even more with the `\bigskip` command:
+
+\bigskip
+
+If we want to continue on a new page, we use the `\newpage` command, like so: \newpage
+
+## R setup code chunk
+```{r setup, include = F}
+# Initial setup
+knitr::opts_chunk$set(echo = TRUE)
+# Fix the error "Package xcolor Warning: Incompatible color definition on input line ..."
+knitr::knit_hooks$set(document = function(x) {
+  sub('\\usepackage[]{color}', '\\usepackage{xcolor}', x, fixed = TRUE)
+})
+```
+
+## Loading packages
+```{r, echo = F, warning = F, message = F}
+# Uncomment to install various packages.
+install.packages(c('reticulate', 'rms', 'car', 'rlang', 'stringi', 'multcomp', 'ggplot2'))
+install.packages(c('tidyverse', 'tidytext', 'topicmodels', 'SnowballC', 'tm'))
+install.packages(c('dplyr', 'corrgram', 'caTools', 'SnowballC', 'tm'))
+
+install.packages('usethis')
+
+```
+
+### Some more or less commonly used packages / libraries
+```{r}
+library(car) # applied regression stuff
+library(corrgram) # plot correlograms, incl. eigenvalue stuff
+library(ggplot2) # awesome plots
+library(reticulate) # python support
+```
+
+### Some libraries relevant to NLP tasks
+```{r}
+library(tidyverse) # general utility & workflow functions
+library(tidytext) # tidy implimentation of NLP methods
+library(topicmodels) # for LDA topic modelling
+library(tm) # general text mining functions, making document term matrixes
+library(SnowballC) # for stemming
+```
+
+## Regular code chunk
+```{r, echo = F, warning = F, message = F}
+mycars <- within(mtcars, { cyl <- ordered(cyl) })
+mycars
+```
+
+## Plot code chunk
+```{r, echo = T, warning = F, message = F, fig.align = 'center', fig.width = 8, fig.height 6, fig.cap = c('CAPTION_PLOT_1', 'CAPTION_PLOT_2') }
+# ... or single plot, meaning only one caption: fig.cap = 'CAPTION'
+# plot(something)
+```
+
+The [R plugin](https://www.jetbrains.com/help/pycharm/r-plugin-support.html) for IntelliJ-based IDEs provides
+handy capabilities to work with the [R Markdown](https://www.jetbrains.com/help/pycharm/r-markdown.html) files.
+To [add](https://www.jetbrains.com/help/pycharm/r-markdown.html#add-code-chunk) a new R chunk,
+position the caret at any line or the code chunk, then click "+".
+
+The code chunk appears:
+```{r}
+```
+
+Now, click the **Run** button on the chunk toolbar to [execute](https://www.jetbrains.com/help/pycharm/r-markdown.html#run-r-code) the chunk code. The result should be placed under the chunk.
+Click the **Knit and Open Document** to built and preview an output.

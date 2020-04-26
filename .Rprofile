@@ -1,0 +1,1 @@
+Sys.setenv(RETICULATE_PYTHON = "/home/fero/miniconda3/envs/in5550-2020-exam/bin/python")

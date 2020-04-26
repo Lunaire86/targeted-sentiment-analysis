@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='src',
+    name='babil',
     packages=find_packages(),
     version='0.1.0',
     description='IN5550 Home Exam Project - Spring 2020',
