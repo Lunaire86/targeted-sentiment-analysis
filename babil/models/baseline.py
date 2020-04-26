@@ -1,12 +1,12 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # coding: utf-8
 import os
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 import tensorflow as tf
 
-from src.data.preprocessing import ConllData, Vocab
-from src.features.embeddings import WordEmbeddings
+from babil.data.preprocessing import ConllData, Vocab
+from babil.features.embeddings import WordEmbeddings
 
 if __name__ == '__main__':
     # Store command line arguments
@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     # Ensure reproducibility
     global_seed: int
-    with open('../SEED.txt', 'r') as f:
+    with open('../../SEED', 'r') as f:
         global_seed = int(f.read())
     tf.random.set_seed(global_seed)
     print(f"Global seed set: {global_seed}")

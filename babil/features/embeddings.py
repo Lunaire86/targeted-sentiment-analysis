@@ -10,7 +10,7 @@ import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
 
-from src.utils.helpers import set_global_seed
+from babil import set_global_seed
 
 
 def load_gensim_model(filepath: str) -> KeyedVectors:
