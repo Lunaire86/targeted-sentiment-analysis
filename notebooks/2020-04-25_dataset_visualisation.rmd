@@ -38,18 +38,18 @@ knitr::knit_hooks$set(document = function(x) {
 
 ```{r, echo = F, warning = F, message = F}
 # Uncomment to install various packages.
-install.packages(c('car', 'ggplot2', 'multcomp', 'rlang', 'reticulate'))
-install.packages(c('rms', 'stringi','tidytext', 'tidyverse', 'tm', 'xfun'))
-install.packages(c('topicmodels', 'SnowballC', 'fastmap', 'evaluate'))
-install.packages(c('dplyr', 'corrgram', 'caTools', 'forcats', 'gclus', 'zoo'))
-install.packages(c('iterators', 'gtools', 'gridExtra', 'git2r', 'GGally'))
-install.packages(c('lmtest', 'matrixStats', 'memoise', 'modeltools', 'nlme'))
-install.packages(c('promises', 'progress', 'pkgload', 'pillar', 'nparcomp'))
-install.packages(c('ps', 'purrr', 'quantreg', 'repr', 'reshape2', 'readr'))
-install.packages(c('scales', 'rprojroot', 'rms', 'roxygen2', 'rio', 'rex'))
-install.packages(c('sandwich', 'stringr', 'survival', 'sys', 'testthat'))
-install.packages(c('tidyselect', 'tinytex', 'usethis', 'tidyr', 'tibble'))
-install.packages(c('vcd', 'vctrs', 'viridis', 'visreg', 'xtable', 'yaml'))
+# install.packages(c('car', 'ggplot2', 'multcomp', 'rlang', 'reticulate'))
+# install.packages(c('rms', 'stringi','tidytext', 'tidyverse', 'tm', 'xfun'))
+# install.packages(c('topicmodels', 'SnowballC', 'fastmap', 'evaluate'))
+# install.packages(c('dplyr', 'corrgram', 'caTools', 'forcats', 'gclus', 'zoo'))
+# install.packages(c('iterators', 'gtools', 'gridExtra', 'git2r', 'GGally'))
+# install.packages(c('lmtest', 'matrixStats', 'memoise', 'modeltools', 'nlme'))
+# install.packages(c('promises', 'progress', 'pkgload', 'pillar', 'nparcomp'))
+# install.packages(c('ps', 'purrr', 'quantreg', 'repr', 'reshape2', 'readr'))
+# install.packages(c('scales', 'rprojroot', 'rms', 'roxygen2', 'rio', 'rex'))
+# install.packages(c('sandwich', 'stringr', 'survival', 'sys', 'testthat'))
+# install.packages(c('tidyselect', 'tinytex', 'usethis', 'tidyr', 'tibble'))
+# install.packages(c('vcd', 'vctrs', 'viridis', 'visreg', 'xtable', 'yaml'))
 ```
 
 ```{r, echo = F, warning = F, message = F}
