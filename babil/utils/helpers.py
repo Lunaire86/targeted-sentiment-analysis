@@ -11,16 +11,6 @@ from babil.data.preprocessing import Vocab
 from babil.features.embeddings import WordEmbeddings
 
 
-# def set_global_seed() -> Optional[Any]:
-#     # Ensure reproducibility
-#     global_seed: int
-#
-#     with open('../../SEED', 'r') as f:
-#         global_seed = int(f.read())
-#
-#     return tf.random.set_seed(global_seed)
-
-
 def pickle(obj: Union[Vocab, WordEmbeddings], target_dir: str):
     folder_ = os.path.abspath(target_dir)
     name = obj.__class__.__name__

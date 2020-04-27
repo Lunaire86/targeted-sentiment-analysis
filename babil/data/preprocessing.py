@@ -10,6 +10,8 @@ from typing import Tuple, Set
 
 from tensorflow.keras.preprocessing.text import Tokenizer
 
+from babil.utils.helpers import pickle
+
 
 @dataclass
 class ConllData:
@@ -117,8 +119,14 @@ class Vocab:
         self._tokeniser.fit_on_texts(tokens)
         self._update()
 
+    def vectorise(self, texts):
+        return self._vectorise(texts)
+
     def pickle(self, target_directory: str) -> None:
         pickle(self, target_directory)
+
+    def _vectorise(self, texts):
+        return self._tokeniser.texts_to_sequences(texts)
 
     def __len__(self) -> int:
         return len(self.word2idx)
