@@ -1,6 +1,12 @@
 # So reminder. Much work. TODO.
 The idea is that I can use this as a project log. Maybe talk to myself a little when I've worked for 12 hours and feel a bit weird. Keep myself in check. Did I spend several hours yesterday balls deep in regex patterns? Yes. Was that fruitful? Also yes. Kind of. Maybe only a little. Stop nagging.
 
+27.04.20 - Agenda
+---
+1. Get the baseline model up and running.
+2. Get a LaTeX skeleton ready and check that it compiles.
+3. Create a table with a daily plan in this log document.
+
 26.04.20 - Agenda
 ---
 1. Vectorise dataset (from words to integers)
