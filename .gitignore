@@ -3,9 +3,9 @@
 # notebooks/develop/
 
 # Project specific stuff
-excluded/
+#excluded/
 saga/
-project_log.md
+#project_log.md
 
 # Exclude data from source control by default
 # data/  -- not right now
@@ -13,10 +13,10 @@ project_log.md
 # Unversioned files, auto-added -> check later
 LICENSE
 Makefile
-docs/
-models/embeddings/english/20.zip
-precode/targeted_sa.pdf
-references/
+#docs/
+models/embeddings/
+#precode/targeted_sa.pdf
+#references/
 tox.ini
 ###########################################################
 
