@@ -63,6 +63,25 @@ if __name__ == '__main__':
     vocab.add(embeddings.vocab)
     vocab.add(train.get_vocab())
 
+    '''
+    train_tokens = train_df['form_vec'].apply(np.ravel)
+    train_labels = train_df['upos_vec'].apply(np.ravel)
+    dev_tokens = dev_df['form_vec'].apply(np.ravel)
+    dev_labels = dev_df['upos_vec'].apply(np.ravel)
+
+    # Find the length of the longest sequence
+    sequence_length = max(max(train_tokens.apply(len)),
+                          max(dev_tokens.apply(len)))
+
+    # Vectorise by mapping tokens to corresponding embedding
+    # indices, then pad X_train and X_test to the same length
+    X_train = pad_sequences(train_tokens, maxlen=sequence_length)
+    y_train = pad_sequences(train_labels, maxlen=sequence_length)
+
+    X_test = pad_sequences(dev_tokens, maxlen=sequence_length)
+    y_test = pad_sequences(dev_labels, maxlen=sequence_length)
+    '''
+
     # Pad sequences
     sequence_length: int
 
