@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # coding: utf-8
 
 import pickle
@@ -91,9 +91,9 @@ class WordEmbeddings:
         else:
             self.weights = self._vectors
 
-    def pickle(self, target_directory: str) -> None:
-        pickle(self, target_directory)
-        # folder_ = os.path.abspath(path_to_folder)
+    # def save_pickle(self, target_directory: str) -> None:
+    #     pickle(self, target_directory)
+    #     # folder_ = os.path.abspath(path_to_folder)
         # embedding_id = os.path.basename(self.filepath).rsplit('.')[0]
         # pickle_file = embedding_id + '_WordEmbeddings.pickle'
         # path_to_pickle = os.path.join(folder_, pickle_file)

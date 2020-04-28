@@ -1,11 +1,28 @@
 # So reminder. Much work. TODO.
 The idea is that I can use this as a project log. Maybe talk to myself a little when I've worked for 12 hours and feel a bit weird. Keep myself in check. Did I spend several hours yesterday balls deep in regex patterns? Yes. Was that fruitful? Also yes. Kind of. Maybe only a little. Stop nagging.
 
+28.04.20 - Agenda
+---
+1. Baseline...
+2. Track meeting 12:00.
+3. Read the relevant chapter(s) in the Neural Methods book.
+4. Read the relevant chapter(s) in Jurafsky and Martin.
+5. Create the daily plan.
+
 27.04.20 - Agenda
 ---
 1. Get the baseline model up and running.
 2. Get a LaTeX skeleton ready and check that it compiles.
 3. Create a table with a daily plan in this log document.
+
+##### Look into whether it's possible and/or useful to experiement with any of the following:
+
+**kernel_initializer**  
+– Initializer for the `kernel` weights matrix, used for the linear transformation of the inputs. Default: `glorot_uniform`.  
+**recurrent_initializer**  
+– Initializer for the `recurrent_kernel` weights matrix, used for the linear transformation of the recurrent state. Default: `orthogonal`.   
+**bias_initializer**  
+– Initializer for the bias vector. Default: `zeros`.  
 
 26.04.20 - Agenda
 ---
