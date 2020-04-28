@@ -1,5 +1,31 @@
-# So reminder. Much work. TODO.
-The idea is that I can use this as a project log. Maybe talk to myself a little when I've worked for 12 hours and feel a bit weird. Keep myself in check. Did I spend several hours yesterday balls deep in regex patterns? Yes. Was that fruitful? Also yes. Kind of. Maybe only a little. Stop nagging.
+## Daily Plan
+
+### Wednesday 29.04.20
+- Get out of the rabbit hole I entered last night: sort out paths to whatever files are needed.
+- Ask any TensorFlow related questions during the group lecture.
+- Read at least one article and add to .bib file.
+- Not fuck about, and actually get baseline model up and running.
+- Check that all pickles are good! (right now they're lost in space somewhere)
+
+### Thursday 30.04.20
+- Finalise baseline model (hopefully) and describe some of the results. Perhaps link it to the projects particular «problem space», namely joint predictions of target extraction and polarity decision. Check binary F1 score against the 0.4 score mentioned during Tuesday's Q&A session.
+- Smooth out any remaining issues with the data pipeline.
+
+### Friday 01.05.20
+- In the project report, start motivating the choice of experimental directions. Refer to interesting sources.
+- In case `focus == None`, (Jamie will be home, after all), take a day off from code and try to focus on reading and writing report related stuff.
+- Baseline model HAS TO BE READY!!!
+
+### Saturday 02.05.20
+- Let's be realistic. There won't be enough time for me to not work over the weekend...
+- Start working on one of the three experiments.
+- Try to make a decision about what all three directions will be. At least 2/3 of them.
+- Ideally have like one page of the report ready, maybe? Introduction and background and so on.
+
+### Sunday 03.05.20
+- Read about initialisers if I haven't already.
+- Be awesome.
+- Go for a walk or something.
 
 28.04.20 - Agenda
 ---
