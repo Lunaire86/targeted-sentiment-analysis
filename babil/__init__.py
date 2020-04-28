@@ -1,5 +1,7 @@
-import os
+#!/usr/bin/env python3
+# coding: utf-8
 
+import os
 from typing import Optional, Any
 
 import tensorflow as tf
@@ -25,5 +27,3 @@ def set_global_seed() -> Optional[Any]:
     # Ensure reproducibility
     working_dir = os.path.abspath(os.path.curdir)
     return _set_global_seed(working_dir)
-
-
