@@ -12,42 +12,44 @@ from tensorflow.keras.optimizers import Adamax, Adam
 
 from babil import set_global_seed
 from data.preprocessing import ConllData, Vocab
-from features.embeddings import WordEmbeddings
-from utils import ArgParser
+from features.embeddings import load_embeddings, WordEmbeddings
+from utils.config import ArgParser, PathTracker
 from utils.helpers import generate_path, open_pickle, save_pickle
 
 
 if __name__ == '__main__':
     # Store command line arguments
-    parser = ArgParser()    # class defined in utils.ArgParser
+    parser = ArgParser()    # class defined in utils.config.py
     args = parser.args
-    print(args)
+    print(args, sep='\n')
 
     # Ensure reproducibility
     set_global_seed()
 
-    # Set project root dir for easy pickling of objects
-    root = '/home/fero/Desktop/nlp/in5550-2020-exam'
-    conll = {'train': os.path.join(root, 'data/raw/train.conll'),
-             'dev': os.path.join(root, 'data/raw/dev.conll'),
-             'test': os.path.join(root, 'data/raw/test.conll')}
+    # Easy access to various file locations
+    path_to = (
+        PathTracker.from_json('saga_config.json') if args.saga
+        else PathTracker.from_json('local_config.json')
+    )
 
     # Load datasets
-    train = ConllData(conll['train'])
-    dev = ConllData(conll['dev'])
-    test = ConllData(conll['test'])  # Keep ur hands off, bro
+    train = ConllData(path_to.train)
+    dev = ConllData(path_to.dev)
+    test = ConllData(path_to.test)  # Keep ur hands off, bro
 
     # Load embeddings
     print('Loading pre-trained embeddings...')
-    embedding_path = generate_path(location='local', identifier=args.embedding_id)
-    embeddings = open_pickle('embeddings', args.embedding_id) or \
-                 WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
-
-    pickled_embeddings = f'WordEmbeddings_{args.embedding_id}.pickle'
-    if pickled_embeddings in os.listdir(os.path.walk(root)):
-        embeddings = pickle.load(pickled_embeddings)
-    else:
-        embeddings = WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
+    embeddings = load_embeddings(args.embedding_id, path_to)
+    #
+    # embedding_path = generate_path(location='local', identifier=args.embedding_id)
+    # embeddings = open_pickle('embeddings', args.embedding_id) or \
+    #              WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
+    #
+    # pickled_embeddings = f'WordEmbeddings_{args.embedding_id}.pickle'
+    # if pickled_embeddings in os.listdir(os.path.walk(root)):
+    #     embeddings = pickle.load(pickled_embeddings)
+    # else:
+    #     embeddings = WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
     print('Done!')
 
     # Create shared vocabulary for tasks
@@ -86,8 +88,8 @@ if __name__ == '__main__':
     # Datasets get pickled automatically, but we
     # need to pickle vocab and embeddings manually
     print('Pickling embeddings and vocab...')
-    save_pickle(embeddings, os.path.join(root, 'models'))
-    save_pickle(vocab, os.path.join(root, 'data/interim'))
+    save_pickle(embeddings, path_to.models)
+    save_pickle(vocab, path_to.data)
     print('Done!')
     # embeddings.pickle(os.path.join(root, 'models/embeddings/norwegian'))
     # vocab.pickle(os.path.join(root, 'data/interim'))

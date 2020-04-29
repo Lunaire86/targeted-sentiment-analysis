@@ -49,7 +49,6 @@ def open_pickle(flavour: str, file_id: Optional[str] = None):
     raise ValueError(f'Valid arguments are {APPROVED_BY_PICKLE_RICK}')
 
 
-
 # def save_pickle(obj: Union[Vocab, WordEmbeddings], target_dir: str):
 def save_pickle(obj, target_dir: str):
     folder_ = os.path.abspath(target_dir)

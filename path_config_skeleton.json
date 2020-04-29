@@ -1,0 +1,26 @@
+{
+  "local": {
+    "project_root": "absolute_path_to_your_project_root_folder",
+    "data": "project_root/data",
+    "raw_data": "project_root/data/raw",
+    "interim_data": "project_root/data/interim",
+    "processed_data": "project_root/data/processed",
+    "embeddings": "",
+    "models": "project_root/models",
+    "train": "project_root/data/raw/train.conll",
+    "dev": "project_root/data/raw/dev.conll",
+    "test": "project_root/data/raw/test.conll"
+  },
+  "saga": {
+    "project_root": "absolute_path_to_your_project_root_folder",
+    "data": "project_root/data",
+    "raw_data": "project_root/data/raw",
+    "interim_data": "project_root/data/interim",
+    "processed_data": "project_root/data/processed",
+    "embeddings": "/cluster/shared/nlpl/data/vectors/latest",
+    "models": "project_root/models",
+    "train": "project_root/data/raw/train.conll",
+    "dev": "project_root/data/raw/dev.conll",
+    "test": "project_root/data/raw/test.conll"
+  }
+}
