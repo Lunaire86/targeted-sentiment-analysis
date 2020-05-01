@@ -36,21 +36,6 @@ knitr::knit_hooks$set(document = function(x) {
 })
 ```
 
-```{r, echo = F, warning = F, message = F}
-# Uncomment to install various packages.
-# install.packages(c('car', 'ggplot2', 'multcomp', 'rlang', 'reticulate'))
-# install.packages(c('rms', 'stringi','tidytext', 'tidyverse', 'tm', 'xfun'))
-# install.packages(c('topicmodels', 'SnowballC', 'fastmap', 'evaluate'))
-# install.packages(c('dplyr', 'corrgram', 'caTools', 'forcats', 'gclus', 'zoo'))
-# install.packages(c('iterators', 'gtools', 'gridExtra', 'git2r', 'GGally'))
-# install.packages(c('lmtest', 'matrixStats', 'memoise', 'modeltools', 'nlme'))
-# install.packages(c('promises', 'progress', 'pkgload', 'pillar', 'nparcomp'))
-# install.packages(c('ps', 'purrr', 'quantreg', 'repr', 'reshape2', 'readr'))
-# install.packages(c('scales', 'rprojroot', 'rms', 'roxygen2', 'rio', 'rex'))
-# install.packages(c('sandwich', 'stringr', 'survival', 'sys', 'testthat'))
-# install.packages(c('tidyselect', 'tinytex', 'usethis', 'tidyr', 'tibble'))
-# install.packages(c('vcd', 'vctrs', 'viridis', 'visreg', 'xtable', 'yaml'))
-```
 
 ```{r, echo = F, warning = F, message = F}
 # Load the packages we'll use in this notebook.
@@ -64,14 +49,13 @@ Load some NLP related packages / libraries
 # read in the libraries we're going to use
 library(tidyverse) # general utility & workflow functions
 library(tidytext) # tidy implimentation of NLP methods
-library(topicmodels) # for LDA topic modelling
 library(tm) # general text mining functions, making document term matrixes
 library(SnowballC) # for stemming
 library(caTools) # moving window statistics, ROC, AUC
 ```
+
 Load the training data.
 ```{r, echo = F, warning = F, message = F}
-# df <- within(mtcars, { cyl <- ordered(cyl) })
 df <- read.delim('/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll', header = F, quote = "", col.names = c('token', 'tag'))
 summary(df); cat('\n')
 str(df)
