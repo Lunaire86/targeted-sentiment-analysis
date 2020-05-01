@@ -3,6 +3,7 @@ import torch.nn as nn
 from torch.nn.utils.rnn import pad_packed_sequence, PackedSequence
 from torch.utils.data import DataLoader
 import numpy as np
+import os
 
 from utils.bilstm import BiLSTM
 from utils.datasets import Vocab, ConllDataset
@@ -10,6 +11,7 @@ from utils.wordembs import WordVecs
 from utils.metrics import binary_analysis, proportional_analysis, get_analysis
 
 import argparse
+import zipfile
 from tqdm import tqdm
 
 # class BiLSTM(nn.Module):
@@ -198,7 +200,7 @@ if __name__ == "__main__":
     parser.add_argument("--BATCH_SIZE", "-bs", default=50, type=int)
     parser.add_argument("--DROPOUT", "-dr", default=0.01, type=int)
     parser.add_argument("--EMBEDDING_DIM", "-ed", default=100, type=int)
-    parser.add_argument("--EMBEDDINGS", "-emb", default="../embeddings/norwegian/model.txt")
+    parser.add_argument("--EMBEDDINGS", "-emb", default="/cluster/shared/nlpl/data/vectors/latest/94.zip")
     parser.add_argument("--TRAIN_EMBEDDINGS", "-te", action="store_true")
     parser.add_argument("--LEARNING_RATE", "-lr", default=0.01, type=int)
     parser.add_argument("--EPOCHS", "-e", default=50, type=int)
@@ -206,9 +208,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
+    emb_id = os.path.basename(args.EMBEDDINGS).rsplit('.')[0]
+    emb_dir = os.path.join(os.getcwd(), 'models')
+    emb_txt = os.path.join(os.getcwd(), 'models', f'{emb_id}.txt')
+    emb_bin = os.path.join(os.getcwd(), 'models', f'{emb_id}.bin')
+
+    embeddings_bin = None
+    with zipfile.ZipFile(args.EMBEDDINGS, "r") as archive:
+        with open(emb_bin, 'xb') as b:
+            b.write(archive.open("model.bin", 'r').read())
 
     # Get embeddings (CHANGE TO GLOVE OR FASTTEXT EMBEDDINGS)
-    embeddings = WordVecs(args.EMBEDDINGS)
+    # embeddings = WordVecs(args.EMBEDDINGS)
+    embeddings = WordVecs(emb_bin, encoding='latin1')
     w2idx = embeddings._w2idx
 
     # Create shared vocabulary for tasks
