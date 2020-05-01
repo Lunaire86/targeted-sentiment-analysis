@@ -1,8 +1,35 @@
 #!/usr/bin/env python3
 # coding: utf-8
+
 import json
+import os
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass, field
+from typing import Optional, Any
+
+import tensorflow as tf
+
+
+def _set_global_seed(seed_dir):
+    global_seed: int
+    seed_file = os.path.join(seed_dir, 'SEED')
+
+    if os.path.exists(seed_file) and os.path.isfile(seed_file):
+        try:
+            with open(seed_file, 'r') as f:
+                global_seed = int(f.read())
+                return tf.random.set_seed(global_seed)
+
+        except FileNotFoundError:
+            raise FileNotFoundError("SEED file not found. Global seed not set!")
+    else:
+        return _set_global_seed(os.path.split(seed_dir)[0])
+
+
+def set_global_seed() -> Optional[Any]:
+    # Ensure reproducibility
+    working_dir = os.path.abspath(os.path.curdir)
+    return _set_global_seed(working_dir)
 
 
 @dataclass
@@ -93,7 +120,7 @@ class ArgParser:
             '--embedding_id', '-eid',
             action='store',
             type=int,
-            default=58,
+            default=94,
             help='Word embedding ID number (as per http://vectors.nlpl.eu)'
         )
         parser.add_argument(
@@ -107,4 +134,11 @@ class ArgParser:
             '--saga',
             action='store_true',
             help='Toggle if running on Saga'
+        )
+        parser.add_argument(
+            '--run',
+            action='store',
+            type=str,
+            choices=['baseline'],
+            default='baseline'
         )

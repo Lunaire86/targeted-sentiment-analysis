@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # coding: utf-8
+
 import os
 import pickle
 import zipfile
 from dataclasses import dataclass, field
-from typing import List, Dict, Union, Optional, Any
+from typing import List, Dict, Union, Optional, Tuple
 
 import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
 
-from babil import set_global_seed
-from utils.config import PathTracker
+from babil.utils.config import PathTracker, set_global_seed
 
 
 def load_gensim_model(filepath: str) -> KeyedVectors:
@@ -24,13 +24,16 @@ def load_gensim_model(filepath: str) -> KeyedVectors:
     # ZIP archive from the NLPL vector repository:
     if filepath.endswith('.zip'):
         with zipfile.ZipFile(filepath, "r") as archive:
+            print(f'utils/embeddings.py -> load_gensim_model() -> zip opened')
             model = KeyedVectors.load_word2vec_format(
                 archive.open("model.bin"), **kwargs)
     else:
+        print(f'utils/embeddings.py -> load_gensim_model() -> else clause (which should not have triggered)')
         model = KeyedVectors.load_word2vec_format(
             filepath, **kwargs)
 
     # Unit-normalizing the vectors (if they aren't already)
+    print(f'utils/embeddings.py -> load_gensim_model() -> model loaded, now unit-normalising')
     model.init_sims(replace=True)
     return model
 
@@ -52,6 +55,7 @@ class WordEmbeddings:
 
     vocab_size: int = field(init=False)
     dim: int = field(init=False)
+    shape: Tuple[int] = field(init=False)
     weights: np.ndarray = field(init=False)
     word2idx: Dict[str, int] = field(init=False)
     idx2word: Dict[int, str] = field(init=False)
@@ -61,13 +65,16 @@ class WordEmbeddings:
     _vocab: List[str] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
+        print(f'utils/embeddings.py -> WordEmbeddings.--post_init__() -> {self.filepath}')
         set_global_seed()
         self._model = load_gensim_model(self.filepath)
+        print(f'utils/embeddings.py -> WordEmbeddings.--post_init__() -> model loaded')
         self._vocab = self._model.index2entity
         self._vectors = self._model.vectors
         self.dim = self._vectors.shape[1]
         self._init_vocab()
         self._set_weights()
+        self.shape = self.weights.shape
 
     def _init_vocab(self) -> None:
         # If the call to __init__() did not include an external vocabulary,
@@ -88,6 +95,15 @@ class WordEmbeddings:
         else:
             self.weights = self._vectors
 
+    def __dummy__(self, vocab_size: int = 10000, dim: int = 50):
+        """Shrink the vocab and return vectors with reduced
+        size in the first dimension, i.e. shape=(10000, 100).
+        NB: This is meant only to be used for local testing,
+        as a means to lower the computational load.
+        """
+        vec = np.copy(self.weights)
+        return vec[:vocab_size, :dim]
+
 
 def _lookup(identifier, topdir) -> Optional[str]:
     """Search folders and subfolders, starting at`topdir`.
@@ -99,15 +115,20 @@ def _lookup(identifier, topdir) -> Optional[str]:
     # This adds support for pickle files we may have lying around from earlier run
     options.append(f'WordEmbeddings_{identifier}.pickle')
 
-    for path, _, files, _ in os.fwalk(topdir):
-        match = set(options).intersection(files)
+    # Try to match in topdir first
+    match = set(options).intersection(os.listdir(topdir))
 
-        # If we have a match (or more), we return it by popping either
-        # the only element, or an arbitrary one — either is fine.
-        if match:
-            abspath = os.path.join(path, match.pop())
-            return abspath if os.path.isfile(abspath) else None
-    return None
+    # If we have a match, we pop it. It won't matter whether
+    # we have a single match, or an arbitrary number of them.
+    if match:
+        abspath = os.path.join(topdir, match.pop())
+    else:  # we traverse
+        for path, _, files, _ in os.fwalk(topdir):
+            match = set(options).intersection(files)
+            if match:
+                abspath = os.path.join(path, match.pop())
+                break
+    return abspath if os.path.isfile(abspath) else None
 
 
 def load_embeddings(identifier: Union[str, int], path_to: Optional[PathTracker] = '') -> WordEmbeddings:
@@ -122,15 +143,19 @@ def load_embeddings(identifier: Union[str, int], path_to: Optional[PathTracker] 
     # First, check if `identifier` is actually the full path to a file
     if os.path.isfile(identifier):
         if identifier.endswith('.pickle'):
+            print(f'utils/embeddings.py -> load_embeddings({identifier}, path_to): Found pickled word embeddings!')
             with open(identifier) as f:
                 return pickle.load(f)
         else:
+            print(f'utils/embeddings.py -> load_embeddings({identifier}, path_to): No pickles!')
             return WordEmbeddings(identifier)
 
     # Search project directory first. If we have pickled
     # embeddings from previous runs, we'd like to find them first
-    path_found = _lookup(identifier, path_to.project_root) or _lookup(identifier, path_to.embeddings)
+    internal, external = [
+        _lookup(identifier, folder) for folder
+        in (path_to.project_root, path_to.embeddings)]
 
-    if path_found:
-        return WordEmbeddings(path_found)
+    if internal or external:  # recursive call
+        return load_embeddings(internal or external)
     raise FileNotFoundError()
