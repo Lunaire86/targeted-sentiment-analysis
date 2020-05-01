@@ -3,34 +3,25 @@
 
 import os
 import pickle
+from argparse import Namespace
+from logging import Logger
 
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
 from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
 from tensorflow.keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
 from tensorflow.keras.optimizers import Adamax, Adam
 
-from babil import set_global_seed
-from data.preprocessing import ConllData, Vocab
-from features.embeddings import load_embeddings, WordEmbeddings
-from utils.config import ArgParser, PathTracker
-from utils.helpers import generate_path, open_pickle, save_pickle
+from babil.data.preprocessing import ConllData, Vocab
+from babil.features.embeddings import load_embeddings
+from babil.utils.config import ArgParser, PathTracker, set_global_seed
+from babil.utils.helpers import save_pickle
 
 
-if __name__ == '__main__':
-    # Store command line arguments
-    parser = ArgParser()    # class defined in utils.config.py
-    args = parser.args
-    print(args, sep='\n')
-
-    # Ensure reproducibility
-    set_global_seed()
-
-    # Easy access to various file locations
-    path_to = (
-        PathTracker.from_json('saga_config.json') if args.saga
-        else PathTracker.from_json('local_config.json')
-    )
+def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
+    args = parsed_args
+    path_to = paths
 
     # Load datasets
     train = ConllData(path_to.train)
@@ -40,17 +31,9 @@ if __name__ == '__main__':
     # Load embeddings
     print('Loading pre-trained embeddings...')
     embeddings = load_embeddings(args.embedding_id, path_to)
-    #
-    # embedding_path = generate_path(location='local', identifier=args.embedding_id)
-    # embeddings = open_pickle('embeddings', args.embedding_id) or \
-    #              WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
-    #
-    # pickled_embeddings = f'WordEmbeddings_{args.embedding_id}.pickle'
-    # if pickled_embeddings in os.listdir(os.path.walk(root)):
-    #     embeddings = pickle.load(pickled_embeddings)
-    # else:
-    #     embeddings = WordEmbeddings(filepath='/media/fero/Programs/nlp/embeddings/norwegian/58.zip')
-    print('Done!')
+    small_embeddings = embeddings.__dummy__()
+    print(f'Embeddings shape: {embeddings.shape}')
+    print(f', dummy shape: {small_embeddings.shape}')
 
     # Create shared vocabulary for tasks
     print('Building the vocabulary...')
@@ -89,6 +72,7 @@ if __name__ == '__main__':
     # need to pickle vocab and embeddings manually
     print('Pickling embeddings and vocab...')
     save_pickle(embeddings, path_to.models)
+    np.save(os.path.join(path_to.models, 'small-vec'), small_embeddings)
     save_pickle(vocab, path_to.data)
     print('Done!')
     # embeddings.pickle(os.path.join(root, 'models/embeddings/norwegian'))
@@ -113,3 +97,8 @@ if __name__ == '__main__':
     # # x = LSTM(args.hidden_dim)(x)
     # x = Dense(64, activation='relu')(x)
     # output = Dense(len(labels), activation='softmax')(x)
+
+
+
+if __name__ == '__main__':
+    run()
