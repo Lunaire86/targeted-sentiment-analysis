@@ -5,8 +5,8 @@ import os
 import pickle
 from typing import Union, Optional
 
-from babil.data.preprocessing import Vocab
-from babil.features.embeddings import WordEmbeddings
+from data.preprocessing import Vocab
+from features.embeddings import WordEmbeddings
 
 
 # Pickle Rick approves of these specific
