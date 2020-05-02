@@ -11,7 +11,7 @@ import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
 
-from babil.utils.config import PathTracker, set_global_seed
+from utils.config import PathTracker, set_global_seed
 
 
 def load_gensim_model(filepath: str) -> KeyedVectors:
@@ -117,7 +117,7 @@ def _lookup(identifier, topdir) -> Optional[str]:
 
     # Try to match in topdir first
     match = set(options).intersection(os.listdir(topdir))
-
+    abspath = ''
     # If we have a match, we pop it. It won't matter whether
     # we have a single match, or an arbitrary number of them.
     if match:
@@ -128,6 +128,7 @@ def _lookup(identifier, topdir) -> Optional[str]:
             if match:
                 abspath = os.path.join(path, match.pop())
                 break
+
     return abspath if os.path.isfile(abspath) else None
 
 
@@ -144,7 +145,8 @@ def load_embeddings(identifier: Union[str, int], path_to: Optional[PathTracker] 
     if os.path.isfile(identifier):
         if identifier.endswith('.pickle'):
             print(f'utils/embeddings.py -> load_embeddings({identifier}, path_to): Found pickled word embeddings!')
-            with open(identifier) as f:
+            with open(identifier, 'rb') as f:
+                # print(f'\nTRYING TO LOAD {f}\n')
                 return pickle.load(f)
         else:
             print(f'utils/embeddings.py -> load_embeddings({identifier}, path_to): No pickles!')
