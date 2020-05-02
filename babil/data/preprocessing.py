@@ -5,9 +5,10 @@ import os
 import pickle
 import re
 from dataclasses import dataclass, field
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Optional
 from typing import Tuple, Set
 
+import numpy as np
 from tensorflow.keras.preprocessing.text import Tokenizer
 
 
@@ -54,8 +55,25 @@ class ConllData:
             self._unique_tokens.update(tok)
             self._unique_labels.update(lab)
 
-    def as_lists(self) -> List[List[Tuple[str]]]:
-        return self._X_y_split_sents
+    def as_arrays(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Returns two lists, X and y, where X contains
+         lists of tokens and y lists of the corresponding labels.
+         """
+        X_, y_ = zip(*self._X_y_split_sents)
+        return (
+            np.array([np.array(tuple_) for tuple_ in X_]),
+            np.array([np.array(tuple_) for tuple_ in y_])
+        )
+
+    def as_lists(self) -> Tuple[List, List]:
+        """Returns two numpy arrays, X and y, where X contains
+        arrays of tokens and y the corresponding labels arrays.
+        """
+        X_, y_ = zip(*self._X_y_split_sents)
+        return (
+            [list(tuple_) for tuple_ in X_],
+            [list(tuple_) for tuple_ in y_]
+        )
 
     def as_tuples(self) -> List[List[Tuple[str]]]:
         return self._parsed_sents
@@ -128,3 +146,25 @@ class Vocab:
 
     def __len__(self) -> int:
         return len(self.word2idx)
+
+
+@dataclass
+class Dataset:
+    conll: ConllData
+    vocab: Vocab
+    X: List[List[int]] = field(init=False)
+    y: List[List[int]] = field(init=False)
+
+    def __post_init__(self):
+        X_, y_ = (self.conll.as_lists())
+        self.X = self.vocab.vectorise(X_)
+        self.y = self._vectorise_labels(y_)
+
+    def _vectorise_labels(self, y_):
+        labels = self.conll.get_labels()
+        label2idx = dict(zip(labels, np.arange(len(labels))))
+
+        return [[label2idx[_] for _ in sequence]for sequence in y_]
+
+    def __len__(self):
+        return len(self.X)
