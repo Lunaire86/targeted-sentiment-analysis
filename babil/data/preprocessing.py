@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
+from os.path import abspath, join
 import pickle
 import re
 from dataclasses import dataclass, field
@@ -13,6 +13,60 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import to_categorical
+
+
+@dataclass
+class LabelTokeniser(Tokenizer):
+    def __init__(self, *args, **kwargs):
+        super(LabelTokeniser, self).__init__(filters='', lower=False, *args, **kwargs)
+
+    def save(self, folder: str):
+        basename = f'{self.__class__.__name__}.pickle'
+        with open(join(folder, basename), 'wb') as f:
+            pickle.dump(self, f)
+
+
+@dataclass
+class WordTokeniser(LabelTokeniser):
+    def __init__(self, *args, **kwargs):
+        super(LabelTokeniser, self).__init__(num_words=None, oov_token='<UNK>', *args, **kwargs)
+
+
+@dataclass
+class Dataset:
+
+    filepath: str
+    X: List[List[str]] = field(init=False)
+    y: List[List[str]] = field(init=False)
+
+    def __post_init__(self):
+        conll = open(abspath(self.filepath), 'r')
+        # strip removes trailing newlines at the bottom of the document
+        text = conll.read().rstrip()
+        self.X, self.y = self._parse(text)
+
+        conll.close()
+
+    def _split_Xy(self, text: str) -> List[List[str]]:
+        # Split on double newlines for individual sentences
+        sentences = text.split('\n\n')
+
+        # 98% of everything I do is overkill,
+        # but I couldn't resist me some regex & chill
+        p = re.compile(r'(?:(\S+)(?:\t)(\S+))+')
+
+        return [re.findall(p, _) for _ in sentences]
+
+    def _parse(self, text: str) -> Tuple[List[Tuple[str]], List[Tuple[str]]]:
+        sentences = self._split_Xy(text)
+
+        X, y = [], []
+        for sentence in sentences:
+            tokens, labels = zip(*sentence)
+            X.append(tokens)
+            y.append(labels)
+        return X, y
+
 
 
 @dataclass
