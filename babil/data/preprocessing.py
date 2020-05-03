@@ -25,11 +25,15 @@ class LabelTokeniser(Tokenizer):
         with open(join(folder, basename), 'wb') as f:
             pickle.dump(self, f)
 
+    def fit_on_texts(self, nested_lists):
+        texts = [' '.join(_) for _ in nested_lists]
+        super().fit_on_texts(texts)
+
 
 @dataclass
 class WordTokeniser(LabelTokeniser):
     def __init__(self, *args, **kwargs):
-        super(LabelTokeniser, self).__init__(num_words=None, oov_token='<UNK>', *args, **kwargs)
+        super(WordTokeniser, self).__init__(num_words=None, oov_token='<UNK>', *args, **kwargs)
 
 
 @dataclass
