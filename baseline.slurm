@@ -33,8 +33,9 @@ set -o nounset
 # the important bit: unload all current modules (just in case) and load IN5550
 module purge
 module use -a /cluster/shared/nlpl/software/modules/etc
-module add nlpl-in5550/202002/3.7
+module add nlpl-in5550/202005/3.7
 module add nlpl-tensorflow/2.0.0/3.7
+module add nlpl-fasttext/0.9.2/3.7
 
 echo "submission directory: ${SUBMITDIR}"
 ulimit -a module list
