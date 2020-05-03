@@ -12,9 +12,11 @@ from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
 from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
 from tensorflow.keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
 from tensorflow.keras.optimizers import Adamax, Adam
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-from data.preprocessing import ConllData, Dataset, Vocab
+from data.preprocessing import ConllData, Data, Vocab
 from features.embeddings import load_embeddings
+from sandbox.data_generator import Minimal
 from utils.config import ArgParser, PathTracker, set_global_seed
 from utils.helpers import save_pickle
 
@@ -59,28 +61,9 @@ def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
     # vocab.add(train.get_vocab())
     print('Done!')
 
-    '''
-    train_tokens = train_df['form_vec'].apply(np.ravel)
-    train_labels = train_df['upos_vec'].apply(np.ravel)
-    dev_tokens = dev_df['form_vec'].apply(np.ravel)
-    dev_labels = dev_df['upos_vec'].apply(np.ravel)
-
-
-
-    # Vectorise by mapping tokens to corresponding embedding
-    # indices, then pad X_train and X_test to the same length
-    X_train = pad_sequences(train_tokens, maxlen=sequence_length)
-    y_train = pad_sequences(train_labels, maxlen=sequence_length)
-
-    X_test = pad_sequences(dev_tokens, maxlen=sequence_length)
-    y_test = pad_sequences(dev_labels, maxlen=sequence_length)
-    '''
-    # Find the length of the longest sequence
-    # sequence_length = max(max(train.as_lists().apply(len)),
-    #                       max(dev_tokens.apply(len)))
-
-    # Pad sequences
-    sequence_length = 50
+    # Convert from ConllData to Dataset
+    train_ds = Data(train, vocab)
+    dev_ds = Data(dev, vocab)
 
     pickle_me_elmo(embeddings, vocab, path_to)
 
@@ -137,33 +120,23 @@ if __name__ == '__main__':
     print('Done!')
 
     # Convert from ConllData to Dataset
-    train_ds = Dataset(train, vocab)
-    dev_ds = Dataset(dev, vocab)
-
-    '''
-    train_tokens = train_df['form_vec'].apply(np.ravel)
-    train_labels = train_df['upos_vec'].apply(np.ravel)
-    dev_tokens = dev_df['form_vec'].apply(np.ravel)
-    dev_labels = dev_df['upos_vec'].apply(np.ravel)
-
-
-
-    # Vectorise by mapping tokens to corresponding embedding
-    # indices, then pad X_train and X_test to the same length
-    X_train = pad_sequences(train_tokens, maxlen=sequence_length)
-    y_train = pad_sequences(train_labels, maxlen=sequence_length)
-
-    X_test = pad_sequences(dev_tokens, maxlen=sequence_length)
-    y_test = pad_sequences(dev_labels, maxlen=sequence_length)
-    '''
-    # Find the length of the longest sequence
-    # sequence_length = max(max(train.as_lists().apply(len)),
-    #                       max(dev_tokens.apply(len)))
-
-    # Pad sequences
-    sequence_length = 50
+    train_ds = Data(train, vocab)
+    dev_ds = Data(dev, vocab)
 
     pickle_me_elmo(embeddings, vocab, path_to)
+
+    # some short sentences to test with
+    idx = [0, 2, 14, 26, 47, 48, 72, 77, 78, 79, 80, 83, 84, 85, 85]
+    lil_X = [train_ds.X[i] for i in idx]
+    lil_y = [train_ds.y[i] for i in idx]
+    mini = Minimal(lil_X, lil_y, batch_size=3)
+    ds = tf.data.Dataset.from_generator(mini, tf.int64)
+    for batch in ds:
+        print(type(batch))
+        print(f'X shape: {batch[0].shape}\n'
+              f'y shape: {batch[1].shape}\n')
+        print(f'First item X: {batch[0[0]]}\n'
+              f'First item y: {batch[1[0]]}')
 
     # Create the embedding layer
     # embedding_layer = Embedding(

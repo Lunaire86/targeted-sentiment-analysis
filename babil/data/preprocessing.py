@@ -9,7 +9,10 @@ from typing import List, Dict, Union, Optional
 from typing import Tuple, Set
 
 import numpy as np
+import tensorflow as tf
+from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.utils import to_categorical
 
 
 @dataclass
@@ -149,11 +152,15 @@ class Vocab:
 
 
 @dataclass
-class Dataset:
+class Data:
+    # TODO : this entire module is a hot mess right now
     conll: ConllData
     vocab: Vocab
     X: List[List[int]] = field(init=False)
     y: List[List[int]] = field(init=False)
+    padded: bool = field(init=False, default=False)
+
+    Dataset: tf.data.Dataset = field(init=False)
 
     def __post_init__(self):
         X_, y_ = (self.conll.as_lists())
@@ -162,9 +169,28 @@ class Dataset:
 
     def _vectorise_labels(self, y_):
         labels = self.conll.get_labels()
-        label2idx = dict(zip(labels, np.arange(len(labels))))
+        # reserve 0 for padding
+        label2idx = dict(zip(labels, np.arange(1, len(labels) + 1)))
 
         return [[label2idx[_] for _ in sequence]for sequence in y_]
+
+    def pad_all(self, maxlen=55):
+        self.padded = True
+        self.X = pad_sequences(self.X, maxlen=maxlen)
+        return self.X
+
+    def as_dataset(self) -> tf.data.Dataset:
+        X_ = tf.data.Dataset.from_tensor_slices(self.X)
+        y_ = tf.data.Dataset.from_tensor_slices(
+            list(map(lambda x: to_categorical(x), self.y))
+        )
+        dataset = tf.data.Dataset.zip((X_, y_))
+
+        self.Dataset = (
+            dataset if self.padded
+            else dataset.padded_batch()
+        )
+        return self.Dataset
 
     def __len__(self):
         return len(self.X)
