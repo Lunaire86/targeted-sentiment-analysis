@@ -4,13 +4,13 @@
 #SBATCH --account=nn9447k
 
 # Time limit for the job. Lower limit means higher job priority.
-#SBATCH --time=01:00:00
+#SBATCH --time=05:00:00
 
 # Number of compute nodes for the job. Default is 1.
 #SBATCH --nodes=2
 
 # Per core memory limit. 3000MB by default (?)
-#SBATCH --mem-per-cpu=10G
+#SBATCH --mem-per-cpu=12G
 
 # Number of cores on the compute node. Request two by default,
 # or between 6 and 10 for larger computations.
@@ -41,4 +41,4 @@ echo "submission directory: ${SUBMITDIR}"
 ulimit -a module list
 
 # pass on the remaining command-line options
-python babil/models/baseline.py "${@}"
+python babil "${@}"
