@@ -3,13 +3,26 @@
 
 import os
 import pickle
+import time
 from argparse import Namespace
 from logging import Logger
 from os.path import join
 from typing import Union
 
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 import numpy as np
+import seaborn as sns
 import tensorflow as tf
+import tensorflow.keras as keras
+
+from tensorflow.keras.callbacks import History
+from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
+from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
+from tensorflow.keras.losses import CategoricalCrossentropy, SparseCategoricalCrossentropy
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import Adam
+
 from gensim.models import FastText
 from gensim.models.fasttext import FastTextKeyedVectors, load_facebook_model, load_facebook_vectors
 
@@ -17,8 +30,45 @@ from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
 from utils.config import PathTracker
 
 
-def throwaway():
-    pass
+def plot_results(result: History, folder: str, metric: str) -> None:
+    # TODO -- find out why this broke -- move to actual file ?
+    t = time.strftime('%m%d_%H-%M-%S')
+    img_name = f'{t}_baseline.png'
+    path = join(folder, img_name)
+
+    plt.plot(result.history[metric], 'C2', label='training')
+    plt.plot(result.history[f'val_{metric}'], 'C1--', label='validation')
+    plt.title('BiLSTM (baseline model)')
+    plt.ylabel(metric)
+    plt.xlabel('epochs')
+    plt.legend(title=metric.capitalize())
+    plt.show()
+    plt.savefig(path, dpi=150)
+    plt.close()
+
+
+def mpl_setup():
+    sns.set()
+    sns.set_context('poster', font_scale=1.3)
+    sns.set_style("white")
+
+    # Update matplotlib defaults to something nicer
+    mpl_update = {
+        'font.size': 16,
+        'xtick.labelsize': 14,
+        'ytick.labelsize': 14,
+        'figure.figsize': [12.0, 8.0],
+        'axes.labelsize': 20,
+        'axes.labelcolor': '#677385',
+        'axes.titlesize': 20,
+        'lines.color': '#0055A7',
+        'lines.linewidth': 3,
+        'text.color': '#677385',
+        # 'font.family': 'sans-serif',
+        # 'font.sans-serif': 'Tahoma'
+    }
+    mpl.rcParams.update(mpl_update)
+    mpl.use('Qt5Agg')
 
 
 def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
@@ -75,54 +125,130 @@ def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
         np.save(f, weights)
 
     print('Building the vocabulary...')
-    # Create tokenisers
-    label_tokeniser = LabelTokeniser()
+    # Words
     word_tokeniser = WordTokeniser()
-
-    # Fit to features and labels
     word_tokeniser.fit_on_texts(train.X)
-    label_tokeniser.fit_on_texts(train.y)
-
-    # Save them as serialised objects using pickle
     word_tokeniser.save(path_to.interim_data)
+    print(f'Found {len(word_tokeniser.word_index)} different words.')
+
+    # Labels
+    label_tokeniser = LabelTokeniser()
+    label_tokeniser.fit_on_texts(train.y)
     label_tokeniser.save(path_to.interim_data)
+    num_classes = len(label_tokeniser.word_index)
+    print(f'Found {len(label_tokeniser.word_index)} different labels.')
 
-    X_train = ''
-    X_dev = ''
+    # Vectorise words
+    X_train = vectorise(train.X, word2idx=word2idx)
+    X_dev = vectorise(dev.X, word2idx=word2idx)
 
-    y_train = ''
-    y_dev = ''
+    # Vectorise labels
+    y_train = vectorise(train.y, label_tokeniser)
+    y_dev = vectorise(dev.y, label_tokeniser)
 
-    # Create the embedding layer
-    # embedding_layer = Embedding(
-    #     input_dim=embeddings.vocab_size,     # vocab size
-    #     output_dim=embeddings.dim,    # embedding dim
-    #     input_length=sequence_length,
-    #     weights=[embeddings.weights],
-    #     mask_zero=True,
-    #     trainable=False,
-    # )
+    # TODO : include vocab from data (atm it's only from embeddings)
 
-    # Create an Input layer
-    # input_ = Input(shape=(sequence_length,), name='input')
-    # x = embedding_layer(input_)
-    # x = Dropout(0.3)(x)
-    # x = Bidirectional(LSTM(args.hidden_dim, return_sequences=True))(x)
-    # x = Bidirectional(LSTM(32))(x)
-    # # x = LSTM(args.hidden_dim)(x)
-    # x = Dense(64, activation='relu')(x)
-    # output = Dense(len(labels), activation='softmax')(x)
+    # Build the model using the Keras functional API
+    text_input = Input(
+        shape=(MAX_SEQUENCE_LENGTH,),
+        name='words'
+    )
+    embedded = Embedding(
+        input_dim=weights_.shape[0],        # vocab size
+        output_dim=weights_.shape[1],       # embedding dim
+        input_length=MAX_SEQUENCE_LENGTH,
+        weights=[weights_],
+        mask_zero=True,
+        trainable=False,
+        name='fastText'
+    )(text_input)
+
+    dropout = Dropout(
+        rate=args.dropout,
+        seed=69686,
+        name='dropout'
+    )(embedded)
+
+    lstm_out = Bidirectional(
+        LSTM(
+            hidden_dim_,
+            recurrent_dropout=args.dropout,
+            return_sequences=True
+        ),
+        name='BiLSTM'
+    )(dropout)
+
+    predicted_labels = Dense(
+        num_classes + 1,  # add one for padding token
+        activation='softmax',
+        name='output'
+    )(lstm_out)
+
+    # TODO : check whether optim and loss can be called directly from compile()
+    optim = Adam(learning_rate=args.learning_rate)     # alternatively, try Adamax
+    loss = SparseCategoricalCrossentropy()
+
+    model = Model(text_input, predicted_labels)
+    model.compile(
+        optimizer=optim,
+        loss=loss,
+        metrics=['accuracy']
+    )
+    model.summary()
+
+    model_path = join(path_to.models, 'baseline_checkpoint.h5')
+    callbacks = [
+        keras.callbacks.EarlyStopping(
+            monitor='val_accuracy',
+            min_delta=0.001,
+            patience=2,
+            verbose=2
+        ),
+        keras.callbacks.ModelCheckpoint(
+            filepath=model_path,
+            monitor='val_loss',
+            save_format='h5',
+            save_best_only=True,
+        ),
+        keras.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=2,
+            verbose=2
+        ),
+        keras.callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.1,
+            patience=10,
+            min_lr=1e-3,
+            verbose=1
+        )
+    ]
+
+    print('Training the model...')
+    results = model.fit(
+        X_train, y_train,
+        validation_data=[X_dev, y_dev],
+        epochs=epochs_,
+        batch_size=args.batch_size,  # samples per gradient
+        verbose=2,
+        shuffle=True,
+        # callbacks=callbacks
+    )
+
+    plot_results(results, path_to.figures, 'accuracy')
+    plot_results(results, path_to.figures, 'loss')
 
 
 if __name__ == '__main__':
     # Based on checking the length of all sentences in train and dev,
     # setting max sequence length to 50 seems reasonable
     MAX_SEQUENCE_LENGTH = 50
+    MAX_VOCAB = 3000
 
     # Setup for running locally, as opposed to on Saga
     from babil.__main__ import dev_mode
-
     args, path_to, logger = dev_mode()
+    mpl_setup()
 
     print('Loading the dataset...')
     train = Dataset(path_to.train)
@@ -153,6 +279,7 @@ if __name__ == '__main__':
     label_tokeniser = LabelTokeniser()
     label_tokeniser.fit_on_texts(train.y)
     label_tokeniser.save(path_to.interim_data)
+    num_classes = len(label_tokeniser.word_index)
     print(f'Found {len(label_tokeniser.word_index)} different labels.')
 
     # Vectorise words
@@ -160,65 +287,104 @@ if __name__ == '__main__':
     X_dev = vectorise(dev.X, word2idx=word2idx)
 
     # Vectorise labels
-    y_train = vectorise(train.y, label_tokeniser, categorical=True)
-    y_dev = vectorise(dev.y, label_tokeniser, categorical=True)
+    y_train = vectorise(train.y, label_tokeniser)
+    y_dev = vectorise(dev.y, label_tokeniser)
+    # y_train = vectorise(train.y, label_tokeniser, categorical=True)
+    # y_dev = vectorise(dev.y, label_tokeniser, categorical=True)
 
-    # Create shared vocabulary for tasks
-    # vocab = None
-    # with open(os.path.join(path_to.data, 'Vocab.pickle'), 'rb') as f:
-    #     vocab = pickle.load(f)
-    # # vocab = Vocab()
-    # labels = train.get_labels()
+    # TODO : include vocab from data (atm it's only from embeddings)
 
-    # Load embeddings
-    # print('Loading pre-trained embeddings...')
-    # embeddings = np.load(os.path.join(path_to.models, 'small-vec.npy'))
-    # # embeddings = load_embeddings(args.embedding_id, path_to)
-    # # small_embeddings = embeddings.__dummy__()
-    # print(f'Embeddings shape: {embeddings.shape}')
-    # # print(f', dummy shape: {small_embeddings.shape}')
-    #
-    #
-    # # Add words from both word embeddings and our training data
-    # # vocab.add(embeddings.vocab)
-    # # vocab.add(train.get_vocab())
-    # print('Done!')
-    #
-    # # Convert from ConllData to Dataset
-    # train_ds = Data(train, vocab)
-    # dev_ds = Data(dev, vocab)
-    #
-    # pickle_me_elmo(embeddings, vocab, path_to)
-    #
-    # # some short sentences to test with
-    # idx = [0, 2, 14, 26, 47, 48, 72, 77, 78, 79, 80, 83, 84, 85, 85]
-    # lil_X = [train_ds.X[i] for i in idx]
-    # lil_y = [train_ds.y[i] for i in idx]
-    # mini = Minimal(lil_X, lil_y, batch_size=3)
-    # ds = tf.data.Dataset.from_generator(mini, tf.int64)
-    # for batch in ds:
-    #     print(type(batch))
-    #     print(f'X shape: {batch[0].shape}\n'
-    #           f'y shape: {batch[1].shape}\n')
-    #     print(f'First item X: {batch[0[0]]}\n'
-    #           f'First item y: {batch[1[0]]}')
+    # Shrink stuff when running locally
+    weights_ = weights[:20000]
+    hidden_dim_ = 32
+    epochs_ = 10
 
-    # Create the embedding layer
-    # embedding_layer = Embedding(
-    #     input_dim=embeddings.vocab_size,     # vocab size
-    #     output_dim=embeddings.dim,    # embedding dim
-    #     input_length=sequence_length,
-    #     weights=[embeddings.weights],
-    #     mask_zero=True,
-    #     trainable=False,
-    # )
+    # Build the model using the Keras functional API
+    text_input = Input(
+        shape=(MAX_SEQUENCE_LENGTH,),
+        name='words'
+    )
+    embedded = Embedding(
+        input_dim=weights_.shape[0],        # vocab size
+        output_dim=weights_.shape[1],       # embedding dim
+        input_length=MAX_SEQUENCE_LENGTH,
+        weights=[weights_],
+        mask_zero=True,
+        trainable=False,
+        name='fastText'
+    )(text_input)
 
-    # Create an Input layer
-    # input_ = Input(shape=(sequence_length,), name='input')
-    # x = embedding_layer(input_)
-    # x = Dropout(0.3)(x)
-    # x = Bidirectional(LSTM(args.hidden_dim, return_sequences=True))(x)
-    # x = Bidirectional(LSTM(32))(x)
-    # # x = LSTM(args.hidden_dim)(x)
-    # x = Dense(64, activation='relu')(x)
-    # output = Dense(len(labels), activation='softmax')(x)
+    dropout = Dropout(
+        rate=args.dropout,
+        seed=69686,
+        name='dropout'
+    )(embedded)
+
+    lstm_out = Bidirectional(
+        LSTM(
+            hidden_dim_,
+            recurrent_dropout=args.dropout,
+            return_sequences=True
+        ),
+        name='BiLSTM'
+    )(dropout)
+
+    predicted_labels = Dense(
+        num_classes + 1,  # add one for padding token
+        activation='softmax',
+        name='output'
+    )(lstm_out)
+
+    # TODO : check whether optim and loss can be called directly from compile()
+    optim = Adam(learning_rate=args.learning_rate)     # alternatively, try Adamax
+    loss = SparseCategoricalCrossentropy()
+
+    model = Model(text_input, predicted_labels)
+    model.compile(
+        optimizer=optim,
+        loss=loss,
+        metrics=['accuracy']
+    )
+    model.summary()
+
+    model_path = join(path_to.models, 'baseline_checkpoint.h5')
+    callbacks = [
+        keras.callbacks.EarlyStopping(
+            monitor='val_accuracy',
+            min_delta=0.001,
+            patience=2,
+            verbose=2
+        ),
+        keras.callbacks.ModelCheckpoint(
+            filepath=model_path,
+            monitor='val_loss',
+            save_format='h5',
+            save_best_only=True,
+        ),
+        keras.callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=2,
+            verbose=2
+        ),
+        keras.callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.1,
+            patience=10,
+            min_lr=1e-3,
+            verbose=1
+        )
+    ]
+
+    print('Training the model...')
+    results = model.fit(
+        X_train, y_train,
+        validation_data=[X_dev, y_dev],
+        epochs=epochs_,
+        batch_size=args.batch_size,  # samples per gradient
+        verbose=2,
+        shuffle=True,
+        # callbacks=callbacks
+    )
+
+    plot_results(results, path_to.figures, 'accuracy')
+    plot_results(results, path_to.figures, 'loss')
