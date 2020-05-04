@@ -95,7 +95,7 @@ class ArgParser:
             '--learning_rate', '-lr',
             action='store',
             type=float,
-            default=1e-3,
+            default=0.01,
             help='Learning rate'
         )
         parser.add_argument(
