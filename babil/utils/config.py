@@ -40,6 +40,7 @@ class PathTracker:
     interim_data: str
     processed_data: str
     embeddings: str
+    figures: str
     models: str
     train: str
     dev: str

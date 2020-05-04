@@ -97,7 +97,8 @@ def vectorise(texts: List[List[str]],
             # Replace unknown tokens with 1
             encoded = [
                 word2idx[word]
-                if word in word2idx
+                if word in word2idx and word2idx[word] < 20000
+                # if word in word2idx  -- TODO : change back
                 else 1
                 for word in sentence
             ]
