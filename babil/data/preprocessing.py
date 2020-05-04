@@ -29,6 +29,10 @@ class LabelTokeniser(Tokenizer):
         texts = [' '.join(_) for _ in nested_lists]
         super().fit_on_texts(texts)
 
+    def texts_to_sequences(self, nested_lists):
+        texts = [' '.join(_) for _ in nested_lists]
+        return super().texts_to_sequences(texts)
+
 
 @dataclass
 class WordTokeniser(LabelTokeniser):
@@ -61,194 +65,54 @@ class Dataset:
 
         return [re.findall(p, _) for _ in sentences]
 
-    def _parse(self, text: str) -> Tuple[List[Tuple[str]], List[Tuple[str]]]:
+    def _parse(self, text: str) -> Tuple[
+        List[List[str]], List[List[str]]
+    ]:
         sentences = self._split_Xy(text)
 
         X, y = [], []
         for sentence in sentences:
             tokens, labels = zip(*sentence)
-            X.append(tokens)
-            y.append(labels)
+            X.append(list(tokens))
+            y.append(list(labels))
         return X, y
 
 
+def vectorise(texts: List[List[str]],
+              tokeniser: Optional[Union[LabelTokeniser, WordTokeniser]] = None,
+              word2idx: Optional[Dict[str, int]] = None,
+              categorical: Optional[bool] = False,
+              maxlen: int = 50) -> List[List[int]]:
 
-@dataclass
-class ConllData:
-    """
-    Parses a conll-file.
-    ---
-    methods:
-        as_lists:
-        - returns a list of lists (sentences) with (token, tag) tuples.
-        as_tuples:
-        - returns a list of lists (sentencees) with (tokens) and (tags) tuples.
-    """
-    filepath: str
-    _abspath: str = field(init=False)
-    _conll_sents: List[str] = field(init=False)
-    _parsed_sents: List[List[Tuple[str]]] = field(init=False)
-    _X_y_split_sents: List[List[Tuple[str]]] = field(init=False)
-    _unique_tokens: Set[str] = field(init=False, default_factory=set)
-    _unique_labels: Set[str] = field(init=False, default_factory=set)
+    vectorised: List[List[int]] = []
+    sequences: List[List[int]] = []
 
-    def __post_init__(self):
-        self._abspath = os.path.abspath(self.filepath)
-        with open(self._abspath, 'r') as f:
-            # remove trailing newlines at the bottom of the document
-            doc = f.read().rstrip()
-        self._conll_sents = doc.split('\n\n')
-        self._parsed_sents = self._parse_conll()
+    # Case: not using pre-trained word embeddings
+    if tokeniser:
+        sequences = tokeniser.texts_to_sequences(texts)
 
-        # for each _ means for each list_of_tuples
-        self._X_y_split_sents = [[*zip(*_)] for _ in self._parsed_sents]
-        self._extract_uniques()
+    # Case: using pre-trained word embeddings
+    if word2idx:
+        for sentence in texts:
+            # Replace unknown tokens with 1
+            encoded = [
+                word2idx[word]
+                if word in word2idx
+                else 1
+                for word in sentence
+            ]
+            vectorised.append(encoded)
 
-        # Save object to data/interim
-        self._pickle()
+    # Pad all sequences
+    vectorised = pad_sequences(
+        sequences or vectorised,
+        maxlen=maxlen,
+        padding='post',
+        truncating='post'
+    )
 
-    def _parse_conll(self) -> List[list]:
-        p = re.compile(r'(?:(\S+)(?:\t)(\S+))+')
-        return [re.findall(p, sentence) for sentence in self._conll_sents]
+    # Case: vectorising labels -> one-hot encode
+    if categorical:
+        vectorised = to_categorical(vectorised)
 
-    def _extract_uniques(self, label: bool = False) -> None:
-        for tok, lab in self._X_y_split_sents:
-            self._unique_tokens.update(tok)
-            self._unique_labels.update(lab)
-
-    def as_arrays(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Returns two lists, X and y, where X contains
-         lists of tokens and y lists of the corresponding labels.
-         """
-        X_, y_ = zip(*self._X_y_split_sents)
-        return (
-            np.array([np.array(tuple_) for tuple_ in X_]),
-            np.array([np.array(tuple_) for tuple_ in y_])
-        )
-
-    def as_lists(self) -> Tuple[List, List]:
-        """Returns two numpy arrays, X and y, where X contains
-        arrays of tokens and y the corresponding labels arrays.
-        """
-        X_, y_ = zip(*self._X_y_split_sents)
-        return (
-            [list(tuple_) for tuple_ in X_],
-            [list(tuple_) for tuple_ in y_]
-        )
-
-    def as_tuples(self) -> List[List[Tuple[str]]]:
-        return self._parsed_sents
-
-    def get_vocab(self) -> List[str]:
-        return list(self._unique_tokens)
-
-    def get_labels(self) -> List[str]:
-        return list(self._unique_labels)
-
-    def _pickle(self) -> None:
-        folder_, file_ = os.path.split(self._abspath)
-        pickle_file = f"{file_.rsplit('.')[0]}_ConllData.pickle"
-
-        # Check whether the file is stored directly in data
-        if os.path.basename(folder_) == 'data':
-            path_to_pickle = os.path.join(folder_, pickle_file)
-
-        # If not, we assume that data contains the folders external, interim, processed, raw
-        else:
-            # Get parent directory (relative parent should be 'data')
-            parent_dir, _ = os.path.split(folder_)
-            # Partially processed datasets goes in the 'interim' folder
-            interim = os.path.join(parent_dir, 'interim')
-            path_to_pickle = os.path.join(interim, pickle_file)
-
-        mode = 'wb' if os.path.exists(path_to_pickle) else 'xb'
-        with open(path_to_pickle, mode) as f:
-            pickle.dump(self, f)
-
-
-@dataclass
-class Vocab:
-    """This class uses the Keras Tokenizer class to build a vocabulary.
-    Dict[word] = index
-    """
-    _tokeniser: Tokenizer = field(init=False)
-    word2idx: Dict[str, int] = field(init=False, default_factory=dict)
-    idx2word: Dict[int, str] = field(init=False, default_factory=dict)
-
-    def __post_init__(self) -> None:
-        self._tokeniser = Tokenizer(filters='', lower=False, oov_token='<UNK>')
-        self.word2idx['<PAD>'] = 0
-        self.idx2word[0] = '<PAD>'
-
-    def _update(self) -> None:
-        self.word2idx.update(self._tokeniser.word_index)
-        self.idx2word.update(self._tokeniser.index_word)
-
-    def add(self, tokens: Union[List[str], str, Dict[str, int]]) -> None:
-        """Fit the tokerniser to the given texts or tokens. Triggers a
-        recursive call if tokens is not a list of texts (nested or flat)."""
-        if isinstance(tokens, str):
-            print(f'token type: {type(tokens)}')
-            return self.add((tokens,))
-        if isinstance(tokens, dict):
-            return self.add(tokens.keys())
-
-        self._tokeniser.fit_on_texts(tokens)
-        self._update()
-
-    # def pickle(self, target_directory: str) -> None:
-    #     save_pickle(self, target_directory)
-
-    def _vectorise(self, texts):
-        return self._tokeniser.texts_to_sequences(texts)
-
-    def vectorise(self, texts):
-        return self._vectorise(texts)
-
-    def __len__(self) -> int:
-        return len(self.word2idx)
-
-
-@dataclass
-class Data:
-    # TODO : this entire module is a hot mess right now
-    conll: ConllData
-    vocab: Vocab
-    X: List[List[int]] = field(init=False)
-    y: List[List[int]] = field(init=False)
-    padded: bool = field(init=False, default=False)
-
-    Dataset: tf.data.Dataset = field(init=False)
-
-    def __post_init__(self):
-        X_, y_ = (self.conll.as_lists())
-        self.X = self.vocab.vectorise(X_)
-        self.y = self._vectorise_labels(y_)
-
-    def _vectorise_labels(self, y_):
-        labels = self.conll.get_labels()
-        # reserve 0 for padding
-        label2idx = dict(zip(labels, np.arange(1, len(labels) + 1)))
-
-        return [[label2idx[_] for _ in sequence]for sequence in y_]
-
-    def pad_all(self, maxlen=55):
-        self.padded = True
-        self.X = pad_sequences(self.X, maxlen=maxlen)
-        return self.X
-
-    def as_dataset(self) -> tf.data.Dataset:
-        X_ = tf.data.Dataset.from_tensor_slices(self.X)
-        y_ = tf.data.Dataset.from_tensor_slices(
-            list(map(lambda x: to_categorical(x), self.y))
-        )
-        dataset = tf.data.Dataset.zip((X_, y_))
-
-        self.Dataset = (
-            dataset if self.padded
-            else dataset.padded_batch()
-        )
-        return self.Dataset
-
-    def __len__(self):
-        return len(self.X)
+    return vectorised
