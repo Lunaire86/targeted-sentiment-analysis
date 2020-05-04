@@ -1,5 +1,19 @@
 ## Daily Plan
 
+### Tuesday 05.05.20
+- Rebase master onto experimental (I think?)
+- Write stuff about baseline model evaluation results.
+- Write background stuff.
+- Maybe mostly write instead of code?
+- Class (or not?) + individual session with lecturer.
+
+### Wednesday
+- Group session at 12:15.
+- Ideally have a different architecture up and running. 
+- Or, work on training fastText embeddings on Norsk Aviskorpus + NoReC?
+
+---
+
 ### Wednesday 29.04.20
 - Get out of the rabbit hole I entered last night: sort out paths to whatever files are needed.
 - Ask any TensorFlow related questions during the group lecture.
