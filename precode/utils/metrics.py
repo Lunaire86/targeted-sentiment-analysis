@@ -161,3 +161,49 @@ def get_analysis(sents, y_pred, y_test):
         pred_analysis[i]["pred"]["target"] = target
     #
     return pred_analysis
+
+
+def __get_analysis(sents, y_pred, y_test):
+    pred_analysis = {}
+    #
+    for sent_id, (sentence, prediction, gold) in enumerate(zip(sents, y_pred, y_test)):
+        predicted_labels = []
+        #
+        label = None
+        # Targets
+        for idx, pred in enumerate(prediction):
+            if pred > 0:
+                if label is None:
+                    label = []
+                    label.append(sentence[idx])
+                else:
+                    label.append(sentence[idx])
+            else:
+                if label is not None:
+                    predicted_labels.append(label)
+                    label = None
+        #
+        gold_labels = []
+        #
+        label = None
+        # Targets
+        for idx, pred in enumerate(gold):
+            if pred > 0:
+                if label is None:
+                    label = []
+                    label.append(sentence[idx])
+                else:
+                    label.append(sentence[idx])
+            else:
+                if label is not None:
+                    gold_labels.append(label)
+                    label = None
+        #
+        pred_analysis[sent_id] = {}
+        pred_analysis[sent_id]["sent"] = [w for w in sentence]
+        pred_analysis[sent_id]["gold"] = {}
+        pred_analysis[sent_id]["gold"]["target"] = gold_labels
+        pred_analysis[sent_id]["pred"] = {}
+        pred_analysis[sent_id]["pred"]["target"] = predicted_labels
+    #
+    return pred_analysis
