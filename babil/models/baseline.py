@@ -30,23 +30,6 @@ from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
 from utils.config import PathTracker
 
 
-def plot_results(result: History, folder: str, metric: str) -> None:
-    # TODO -- find out why this broke -- move to actual file ?
-    t = time.strftime('%m%d_%H-%M-%S')
-    img_name = f'{t}_baseline.png'
-    path = join(folder, img_name)
-
-    plt.plot(result.history[metric], 'C2', label='training')
-    plt.plot(result.history[f'val_{metric}'], 'C1--', label='validation')
-    plt.title('BiLSTM (baseline model)')
-    plt.ylabel(metric)
-    plt.xlabel('epochs')
-    plt.legend(title=metric.capitalize())
-    plt.show()
-    plt.savefig(path, dpi=150)
-    plt.close()
-
-
 def mpl_setup():
     # sns.set()
     # sns.set_context('poster', font_scale=1.3)
@@ -68,7 +51,22 @@ def mpl_setup():
         # 'font.sans-serif': 'Tahoma'
     }
     mpl.rcParams.update(mpl_update)
-    # mpl.use('Qt5Agg')
+    mpl.use('Agg')
+
+
+def plot_results(result: History, folder: str, metric: str) -> None:
+    # TODO -- find out why this broke -- move to actual file ?
+    t = time.strftime('%m%d_%H-%M-%S')
+    img_name = f'{t}_baseline.png'
+    path = join(folder, img_name)
+
+    plt.plot(result.history[metric], 'C2', label='training')
+    plt.plot(result.history[f'val_{metric}'], 'C1--', label='validation')
+    plt.title('BiLSTM (baseline model)')
+    plt.ylabel(metric)
+    plt.xlabel('epochs')
+    plt.legend(title=metric.capitalize())
+    plt.savefig(path, dpi=150)
 
 
 def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
@@ -187,12 +185,11 @@ def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
     optim = Adam(learning_rate=args.learning_rate)     # alternatively, try Adamax
     loss = SparseCategoricalCrossentropy()
 
-    model = Model(text_input, predicted_labels)
+    model = Model(text_input, predicted_labels, name='baseline')
     model.compile(
         optimizer=optim,
         loss=loss,
-        metrics=['accuracy'],
-        name='baseline'
+        metrics=['accuracy']
     )
     model.summary()
 
@@ -242,10 +239,10 @@ def run(parsed_args: Namespace, paths: PathTracker, logger: Logger):
 
 
 
-def dev_build():
+def _build(model_name: str, weights) -> Model:
     # Shrink stuff when running locally
-    weights_ = weights[:20000]
-    hidden_dim_ = 32
+    weights = weights[:20000]
+    hidden_dim_ = 4
 
     # Build the model using the Keras functional API
     text_input = Input(
@@ -253,10 +250,10 @@ def dev_build():
         name='words'
     )
     embedded = Embedding(
-        input_dim=weights_.shape[0],        # vocab size
-        output_dim=weights_.shape[1],       # embedding dim
+        input_dim=weights.shape[0],        # vocab size
+        output_dim=weights.shape[1],       # embedding dim
         input_length=MAX_SEQUENCE_LENGTH,
-        weights=[weights_],
+        weights=[weights],
         mask_zero=True,
         trainable=False,
         name='fastText'
@@ -298,9 +295,8 @@ def dev_build():
     return model
 
 
-def dev_train(model: Model):
-    epochs_ = 10
-    model_path = join(path_to.models, 'baseline_checkpoint.h5')
+def _fit(model: Model) -> History:
+    checkpoint_path = join(path_to.models, 'baseline_checkpoint.h5')
 
     callbacks = [
         keras.callbacks.EarlyStopping(
@@ -310,7 +306,7 @@ def dev_train(model: Model):
             verbose=2
         ),
         keras.callbacks.ModelCheckpoint(
-            filepath=model_path,
+            filepath=checkpoint_path,
             monitor='val_loss',
             save_format='h5',
             save_best_only=True,
@@ -333,9 +329,8 @@ def dev_train(model: Model):
     results = model.fit(
         X_train, y_train,
         validation_data=[X_dev, y_dev],
-        epochs=epochs_,
-        batch_size=args.batch_size,  # samples per gradient
-        verbose=2,
+        epochs=10,
+        batch_size=64,  # samples per gradient
         shuffle=True,
         callbacks=callbacks
     )
@@ -390,13 +385,11 @@ if __name__ == '__main__':
     X_dev = vectorise(dev.X, word2idx=word2idx)
 
     # Vectorise labels
-    y_train = vectorise(train.y, label_tokeniser)
-    y_dev = vectorise(dev.y, label_tokeniser)
-    # y_train = vectorise(train.y, label_tokeniser, categorical=True)
-    # y_dev = vectorise(dev.y, label_tokeniser, categorical=True)
+    y_train = vectorise(train.y, label_tokeniser, categorical=True)
+    y_dev = vectorise(dev.y, label_tokeniser, categorical=True)
 
     # TODO : include vocab from data (atm it's only from embeddings)
-    model = dev_build()
+    model = _build('baseline-small', weights)
     # results = dev_train(model)
 
     # plot_results(results, path_to.figures, 'accuracy')

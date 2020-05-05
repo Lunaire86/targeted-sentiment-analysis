@@ -17,8 +17,10 @@ from tensorflow.keras.utils import to_categorical
 
 @dataclass
 class LabelTokeniser(Tokenizer):
-    def __init__(self, *args, **kwargs):
-        super(LabelTokeniser, self).__init__(filters='', lower=False, *args, **kwargs)
+    def __init__(self, **kwargs):
+        defaults = {'filters': '', 'lower': False}
+        defaults.update(kwargs)
+        super(LabelTokeniser, self).__init__(**defaults)
 
     def save(self, folder: str):
         basename = f'{self.__class__.__name__}.pickle'
@@ -36,8 +38,10 @@ class LabelTokeniser(Tokenizer):
 
 @dataclass
 class WordTokeniser(LabelTokeniser):
-    def __init__(self, *args, **kwargs):
-        super(WordTokeniser, self).__init__(num_words=None, oov_token='<UNK>', *args, **kwargs)
+    def __init__(self, **kwargs):
+        defaults = {'num_words': None, 'oov_token': '<UNK>'}
+        defaults.update(kwargs)
+        super(WordTokeniser, self).__init__(**defaults)
 
 
 @dataclass
@@ -82,10 +86,11 @@ def vectorise(texts: List[List[str]],
               tokeniser: Optional[Union[LabelTokeniser, WordTokeniser]] = None,
               word2idx: Optional[Dict[str, int]] = None,
               categorical: Optional[bool] = False,
-              maxlen: int = 50) -> List[List[int]]:
+              maxlen: int = 50) -> np.ndarray:
 
     vectorised: List[List[int]] = []
     sequences: List[List[int]] = []
+    padded: np.ndarray
 
     # Case: not using pre-trained word embeddings
     if tokeniser:
@@ -105,15 +110,21 @@ def vectorise(texts: List[List[str]],
             vectorised.append(encoded)
 
     # Pad all sequences
-    vectorised = pad_sequences(
+    padded = pad_sequences(
         sequences or vectorised,
         maxlen=maxlen,
         padding='post',
         truncating='post'
     )
 
-    # Case: vectorising labels -> one-hot encode
-    if categorical:
-        vectorised = to_categorical(vectorised)
+    # Case categorical: vectorising labels -> one-hot encode
+    return to_categorical(padded) if categorical else padded
 
-    return vectorised
+
+def masking():
+    '''
+    mask: Binary tensor of shape [batch, timesteps] indicating whether
+    a given timestep should be masked
+    '''
+    # TODO : look into this
+    pass

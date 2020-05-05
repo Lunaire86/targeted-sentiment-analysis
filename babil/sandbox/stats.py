@@ -5,6 +5,7 @@ import os
 import pickle
 import time
 from collections import Counter, OrderedDict
+from os.path import join
 from typing import List, Any
 
 # plotting
@@ -13,7 +14,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-from data.preprocessing import Data, ConllData
+from data.preprocessing import Dataset
 from utils.config import PathTracker, set_global_seed
 
 
@@ -71,7 +72,7 @@ def plot_freqs(counter, name):
     indexes = np.arange(len(len_))
 
     bar_width = 0.35
-    low, high = min(c.keys()), max(c.keys())
+    low, high = min(counter.keys()), max(counter.keys())
     high += 10 - (high % 10)  # round up to the nearest tenner
     x_ticks = np.arange(low - 1, high, 10)
     x_ticks[0] = 1
@@ -107,44 +108,51 @@ def relative_length(c: Counter, percentile: int):
     print(od.items(), '\n')
 
 
+def write_to_csv(filepath, data):
+    raw_count = [len(_) for _ in data]
+    raw_count.sort()
+    freqs = Counter(raw_count)
+    s = [f'{c},{freqs[c]}\n' for c in raw_count]
+    with open(filepath, 'w') as f:
+        f.write('length,frequency\n')
+        f.writelines(s)
+
+
 if __name__ == '__main__':
     setup()
     set_global_seed()
     print('Global seed set!')
 
-    print('Reading data from conll...')
     path_to = PathTracker.from_json(
-        os.path.join(os.pardir, os.pardir, 'local_config.json')
+        join(os.pardir, os.pardir, 'local_config.json')
     )
-    train = ConllData(path_to.train)
-    dev = ConllData(path_to.dev)
 
+    print('Reading data from conll...')
+    train = Dataset(path_to.train)
+    dev = Dataset(path_to.dev)
     print('Done!')
 
-    print('Loading pickled vocab...')
-    vocab = None
-    with open(os.path.join(path_to.data, 'Vocab.pickle'), 'rb') as f:
-        vocab = pickle.load(f)
-    print('Done!')
+    train_counter = Counter([len(_) for _ in train.X])
+    dev_counter = Counter([len(_) for _ in dev.X])
 
-    print('Converting to Dataset...')
-    train_ds = Data(train, vocab)
-    dev_ds = Data(dev, vocab)
-    print('Done!')
 
-    train_counter = Counter([len(_) for _ in train_ds.X])
-    dev_counter = Counter([len(_) for _ in dev_ds.X])
+    # write_to_csv(filepath=join(path_to.figures, 'train_sent_len.csv'), data=train.X)
+    # write_to_csv(filepath=join(path_to.figures, 'dev_sent_len.csv'), data=dev.X)
 
-    print(f'\nSentence count\ntrain: {len(train_ds.X)}\ndev:   {len(dev_ds.X)}\n'
+
+    print(f'\nSentence count\ntrain: {len(train.X)}\ndev:   {len(dev.X)}\n'
           f'\nShortest sentence\ntrain: {min(train_counter.keys())}\ndev:   {min(dev_counter.keys())}\n'
           f'\nLongest sentence\ntrain: {max(train_counter.keys())}\ndev:   {max(dev_counter.keys())}\n')
 
     print(f'\n{"~" * 5}\nTRAIN\n{"~" * 5}')
     for p in np.arange(50, 75, 5):
-        relative_length(train_counter, p)
-
+        # relative_length(train_counter, p)
+        pass
     print(f'\n{"~" * 3}\nDEV\n{"~" * 3}')
     for p in np.arange(50, 75, 5):
-        relative_length(dev_counter, p)
+        # relative_length(dev_counter, p)
+        pass
 
     # plot_freqs(c, 'train')
+
+
