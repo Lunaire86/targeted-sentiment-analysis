@@ -1,57 +1,93 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
-import pickle
-from typing import Union, Optional
+import time
+from os.path import join
+from typing import Dict
 
-from data.preprocessing import Vocab
-from features.embeddings import WordEmbeddings
+import numpy as np
+from matplotlib import pyplot as plt
+from tensorflow.keras.callbacks import History
 
 
-# Pickle Rick approves of these specific
-# arguments because we can only allow for
-# meaningful and relevant pickled objects.
-APPROVED_BY_PICKLE_RICK = {
-    'embeddings',
-    'vocab',
-    'train',
-    'dev',
-    'test'
-}
+def flatten(padded_sequences, decode=False) -> np.ndarray:
+    # Shape of sequences is (num_sequences, padding_width, num_classes + 1)
+    flat_encoded = np.array([
+        one_hot_encoded for tokens
+        in padded_sequences
+        for one_hot_encoded in tokens
+    ])
+    # Shape of flat_encoded is (num_tokens, num_classes + 1)
+    if decode:
+        # one-hot to single integer representation
+        flat_decoded = np.array([
+            int(np.argmax(encoded))
+            for encoded in flat_encoded
+        ])
+        # Shape of flat_encoded is (num_tokens,)
+        return flat_decoded
+    return flat_encoded
 
-# def generate_path(arg: str, url: Optional[str] = '') -> str:
-#     base = ''
-#     if url:
-#         # TODO : Add support for ... something? TensorFlow Hub, GitHub, NLPL website?
-#         raise NotImplementedError('Coming in the near future. Maybe.')
-#     if arg in LOCATIONS:
-#         base = LOCATIONS[arg]
-#         return base
-#     raise ValueError(f'Valid arguments are {LOCATIONS}. '
-#                      f'If location=online, a valid url must be provided as the second argument.')
-#
-#
-# def open_pickle(flavour: str, file_id: Optional[str] = None):
-#     if flavour in APPROVED_BY_PICKLE_RICK:
-#         # TODO : implement
-#         return ''
-#     raise ValueError(f'Valid arguments are {APPROVED_BY_PICKLE_RICK}')
-#
 
-# def save_pickle(obj: Union[Vocab, WordEmbeddings], target_dir: str):
-def save_pickle(obj, target_dir: str, prefix: str = ''):
-    folder_ = os.path.abspath(target_dir)
-    name = obj.__class__.__name__
-    id_ = ''
+def y_dict(X: np.ndarray, y: np.ndarray,
+           idx2lab: Dict[int, str],
+           num_classes: int = 5) -> Dict:
+    # Create an index array that "masks out" padding tokens
+    pad_idx_arr = np.where(X.ravel() != 0.0)[0]
+    # Create index arrays that maps out individual sentences
+    sent_idx_arrays = [
+        np.arange(len(sent)) for sent
+        in [np.where(word != 0.0)[0] for word in X]
+    ]
 
-    if isinstance(obj, WordEmbeddings):
-        # Shave off the .zip/.txt/.whatever, and get the ID
-        id_ = os.path.basename(obj.filepath).rsplit('.')[0]
-    prefix = f'{prefix}_' if prefix else ''
-    pickle_file = f'{prefix}{name}_{id_}.pickle' if id_ else f'{name}.pickle'
-    path_to_pickle = os.path.join(folder_, pickle_file)
+    one_hot_y = flatten(y)
+    vectorised_y = flatten(y, decode=True)
+    vectorised_X = flatten(X, decode=True)
 
-    mode = 'wb' if os.path.exists(path_to_pickle) else 'xb'
-    with open(path_to_pickle, mode) as f:
-        pickle.dump(obj, f)
+    unpadded = vectorised_y[pad_idx_arr]
+    readable = np.array([idx2lab[i] for i in unpadded])
+
+    one_hot_sents, vec_sents, word_sents = [], [], []
+    n = num_classes + 1
+    for ixs in sent_idx_arrays:
+        vec_sents.append(unpadded[ixs])
+        word_sents.append(readable[ixs])
+        # Multiply sentence length by num_classes + 1
+        one_hot_sents.append(one_hot_y[np.arange(ixs.size * n)])
+        vectorised_X = vectorised_X[len(ixs):]
+
+    return {
+        'flat': {
+            'one-hot': one_hot_y,
+            'vectorised': unpadded,
+            'readable': readable
+        },
+        'sequential': {
+            'one-hot': one_hot_sents,
+            'vectorised': vec_sents,
+            'readable': word_sents
+        }
+    }
+
+
+def plot_results(result: History, folder: str, metric: str, name: str) -> None:
+    t = time.strftime('%m%d_%H-%M-%S')
+    img_name = f'{t}_{name}_{metric}.png'
+    path = join(folder, img_name)
+
+    # Nicer x ticks
+    x_ticks = np.arange(len(result.history[metric]), dtype=int)
+    x_labels = x_ticks + 1
+
+    plt.plot(result.history[metric], 'C2o-', label='training')
+    if metric != 'lr':
+        plt.plot(result.history[f'val_{metric}'], 'C1o--', label='validation')
+
+    plt.title('BiLSTM (baseline model)')
+    plt.ylabel(metric)
+    plt.xlabel('epochs')
+    plt.xticks(ticks=x_ticks, labels=x_labels)
+    plt.legend(title=metric.capitalize())
+
+    plt.savefig(path)
+    plt.close('all')
