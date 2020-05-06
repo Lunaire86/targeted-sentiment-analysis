@@ -164,24 +164,24 @@ def get_analysis(y_pred, y_gold, sentences) -> Dict[int, Dict[Any, Any]]:
         return prediction_analysis
 
 
-def proportional_analysis(flat_y_golds, flat_y_preds):
-    target_labels = [1, 2, 3, 4]
+def proportional_analysis(flat_gold_labels, flat_predictions):
+    target_labels = [2, 3, 4, 5]
 
     print(f'Proportional results:\n{"#" * 80}\n')
 
     # Targets
     precision = precision_score(
-        flat_y_golds, flat_y_preds,
+        flat_gold_labels, flat_predictions,
         labels=target_labels,
         average="micro"
     )
     recall = recall_score(
-        flat_y_golds, flat_y_preds,
+        flat_gold_labels, flat_predictions,
         labels=target_labels,
         average="micro"
     )
     f1 = f1_score(
-        flat_y_golds, flat_y_preds,
+        flat_gold_labels, flat_predictions,
         labels=target_labels,
         average="micro"
     )
@@ -290,3 +290,55 @@ if __name__ == '__main__':
     # step y
     # calculate proportional f1 using the flattened lists
     propor_f1 = proportional_analysis(flat_golds, flat_preds)
+
+'''
+for sent_id, (prediction, gold, sentence) in enumerate(zip(y_pred['sequential']['vectorised'][:5], y_gold['sequential']['vectorised'][:5], dev.X[:5])):
+    # print(f'id: {sent_id}\n'
+    #       f'pred: {prediction}\n'
+    #       f'gold: {gold}\n'
+    #       f'sentence: {sentence}\n')
+    predicted_targets = []
+    label = None
+    # Targets
+    for idx, pred in enumerate(prediction):
+        if sent_id == 1:
+            print(f'idx: {idx}, pred: {pred}')
+        if pred > 0:
+            if sent_id == 1:
+                print(f'pred > 0')
+            if not label:
+                label = [sentence[idx]]
+                if sent_id == 1:
+                    print(f'if not label: True\nlabel = [sentence[idx]] -> [sentence[idx]]={[sentence[idx]]}, label={label}')
+            else:
+                label.append(sentence[idx])
+                if sent_id == 1:
+                    print(f'else (if not label):\nlabel.append(sentence[idx]) -> label={label}')
+        else:
+            if sent_id == 1:
+                print('pred !> 0 (should mean pred is 0 then)')
+            if label:
+                predicted_targets.append(label)
+                if sent_id == 1:
+                    print(f'pred !> 0 and label = True\npredicted_targets.append(label)\nlabel={label}\npredicted_targets={predicted_targets}')
+                label = None
+                if sent_id == 1:
+                    print('label set to None again')
+
+idx: 0, pred: 1
+pred > 0
+if not label: True
+label = [sentence[idx]] -> [sentence[idx]]=['Løvefilm'], label=['Løvefilm']
+idx: 1, pred: 1
+pred > 0
+else (if not label):
+label.append(sentence[idx]) -> label=['Løvefilm', 'som']
+idx: 2, pred: 1
+pred > 0
+else (if not label):
+label.append(sentence[idx]) -> label=['Løvefilm', 'som', 'ikke']
+idx: 3, pred: 1
+pred > 0
+else (if not label):
+label.append(sentence[idx]) -> label=['Løvefilm', 'som', 'ikke', 'biter']
+'''

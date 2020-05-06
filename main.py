@@ -2,7 +2,7 @@
 # coding: utf-8
 import logging
 
-from babil.models import baseline
+from babil.models import run
 from babil.utils.config import ArgParser, PathTracker, set_global_seed
 
 if __name__ == '__main__':
@@ -32,4 +32,4 @@ if __name__ == '__main__':
     if args.run == 'baseline':
         s = '~' * len(args.run)
         print(f'{s}\nBASELINE\n{s}')
-        baseline.run(args, paths, logger)
+        run.baseline(args, paths, logger)

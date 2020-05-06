@@ -1,26 +1,40 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import os
+import pickle
+import time
 from argparse import Namespace
 from dataclasses import dataclass, field
+from logging import Logger
 from os.path import join
-from typing import List, Tuple
+from typing import Union, List, Tuple
 
+import matplotlib as mpl
+from matplotlib import pyplot as plt
 import numpy as np
 # import seaborn as sns
+import tensorflow as tf
 import tensorflow.keras as keras
-from tensorflow.keras.callbacks import Callback
+from sklearn.metrics import classification_report
+
 from tensorflow.keras.callbacks import History, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from tensorflow.keras.layers import Bidirectional, Dense, Embedding
-from tensorflow.keras.layers import Input, LSTM
+from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
+from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
 from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.metrics import BinaryAccuracy, CategoricalAccuracy, Precision, Recall
+from tensorflow.keras.metrics import BinaryAccuracy, CategoricalAccuracy, Metric, Precision, Recall
 from tensorflow.keras.metrics import TruePositives, TrueNegatives, FalsePositives, FalseNegatives
+
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-from sandbox.keras_metrics import BinaryFalsePositives, BinaryFalseNegatives
+from gensim.models import FastText
+from gensim.models.fasttext import FastTextKeyedVectors, load_facebook_model, load_facebook_vectors
+
+from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
 from sandbox.keras_metrics import BinaryTruePositives, BinaryTrueNegatives
+from sandbox.keras_metrics import BinaryFalsePositives, BinaryFalseNegatives
+
 from utils.config import PathTracker
 
 METRICS = [
@@ -32,10 +46,10 @@ METRICS = [
     FalseNegatives(name='fn'),
     Precision(name='precision'),
     Recall(name='recall'),
-    # BinaryTruePositives(name='btp'),
-    # BinaryTrueNegatives(name='btn'),
-    # BinaryFalsePositives(name='bfp'),
-    # BinaryFalseNegatives(name='bfn')
+    BinaryTruePositives(name='btp'),
+    BinaryTrueNegatives(name='btn'),
+    BinaryFalsePositives(name='bfp'),
+    BinaryFalseNegatives(name='bfn')
 ]
 
 
@@ -53,7 +67,7 @@ class Baseline:
     # fields set in __post_init__()
     recurrent_dropout: float = field(init=False)
     checkpoint_path: str = field(init=False)
-    callbacks: List[Callback] = field(init=False, default_factory=list)
+    callbacks: List[keras.callbacks] = field(init=False, default_factory=list)
 
     # class output
     model: Model = field(init=False, default=None)
@@ -69,14 +83,12 @@ class Baseline:
         self.callbacks = [
             EarlyStopping(
                 monitor='val_loss',
-                min_delta=0.01,
-                patience=3,
+                patience=2,
                 verbose=2
             ),
             EarlyStopping(
                 monitor='val_accuracy',
-                min_delta=0.01,
-                patience=3,
+                patience=2,
                 verbose=2
             ),
             ModelCheckpoint(
@@ -94,7 +106,7 @@ class Baseline:
             )
         ]
 
-    def build(self) -> None:
+    def build(self):
 
         """Build a model using the Keras functional API."""
 
@@ -137,7 +149,13 @@ class Baseline:
             outputs=[predicted_labels],
             name='baseline'
         )
-        optim = Adam(learning_rate=self.args.learning_rate)  # alternatively, try Adamax
+
+    def summary(self):
+        return self.model.summary()
+
+    def compile(self):
+        """Compile model."""
+        optim = Adam(learning_rate=self.lr)  # alternatively, try Adamax
         loss = CategoricalCrossentropy()
 
         self.model.compile(
@@ -145,12 +163,8 @@ class Baseline:
             loss=loss,
             metrics=METRICS
         )
-        self.model.summary()
 
-    def summary(self):
-        return self.model.summary()
-
-    def train(self, X_train, y_train, X_dev, y_dev) -> None:
+    def train(self, X_train, y_train, X_dev, y_dev) -> History:
         """Train model."""
         self.results = self.model.fit(
             X_train, y_train,
@@ -158,30 +172,30 @@ class Baseline:
             epochs=self.args.epochs,
             batch_size=self.args.batch_size,  # samples per gradient
             shuffle=True,
-            verbose=2,
             callbacks=self.callbacks
         )
+        return self.results
 
     @staticmethod
-    def save(model, path: str, name: str = 'baseline.h5') -> None:
+    def save(model, path) -> None:
         """Save model."""
-        model.save(join(path, name))
+        model.save(join(path, 'improved.h5'))
 
     @staticmethod
-    def load(path: str, checkpoint: bool = True) -> Tuple[Model, History]:
+    def load(path, checkpoint: bool = True) -> Tuple[Model, History]:
         """Loads the pre-trained baseline model.
         Returns both model and its results."""
         if checkpoint:
-            model = keras.models.load_model(join(path, 'baseline_checkpoint.h5'))
+            model = keras.models.load_model(join(path, 'improved_checkpoint.h5'))
         else:
-            model = keras.models.load_model(join(path, 'baseline.h5'))
+            model = keras.models.load_model(join(path, 'improved.h5'))
 
         return model, model.history
 
-    def predict(self, *args, **kwargs):
+    def predict(self):
         """Predict."""
-        return self.model.predict(*args, **kwargs)
+        pass
 
-    def evaluate(self, *args, **kwargs):
+    def evaluate(self):
         """Evaluate."""
-        return self.model.evaluate(*args, **kwargs)
+        pass

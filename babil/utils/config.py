@@ -143,3 +143,8 @@ class ArgParser:
             choices=['baseline'],
             default='baseline'
         )
+        parser.add_argument(
+            '--load',
+            action='store_true',
+            help='Toggle if loading checkpoint model'
+        )
