@@ -3,7 +3,7 @@
 
 import time
 from os.path import join
-from typing import Dict
+from typing import Dict, Any, List, Union
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -29,9 +29,19 @@ def flatten(padded_sequences, decode=False) -> np.ndarray:
     return flat_encoded
 
 
+def serialise(y_dict: Dict) -> Dict[Dict, List[Any]]:
+    # TODO : this method is being a complete arse
+    d = dict(y_dict)
+    for k, v in d.items():
+        for entry in v.keys():
+            if isinstance(entry, np.ndarray):
+                d[k][v][entry] = entry.tolist()
+    return d
+
+
 def y_dict(X: np.ndarray, y: np.ndarray,
            idx2lab: Dict[int, str],
-           num_classes: int = 5) -> Dict:
+           num_classes: int = 5) -> Dict[str, Union[Dict[str, Union[np.ndarray, Any]], Dict[str, np.ndarray]]]:
     # Create an index array that "masks out" padding tokens
     pad_idx_arr = np.where(X.ravel() != 0.0)[0]
     # Create index arrays that maps out individual sentences
@@ -47,13 +57,17 @@ def y_dict(X: np.ndarray, y: np.ndarray,
     unpadded = vectorised_y[pad_idx_arr]
     readable = np.array([idx2lab[i] for i in unpadded])
 
-    one_hot_sents, vec_sents, word_sents = [], [], []
     n = num_classes + 1
-    for ixs in sent_idx_arrays:
-        vec_sents.append(unpadded[ixs])
-        word_sents.append(readable[ixs])
+    one_hot_sents = np.empty(shape=(len(X), n), dtype=np.ndarray)
+    vec_sents = np.empty(shape=(len(X),), dtype=np.ndarray)
+    word_sents = vec_sents.copy()
+
+    for i, ixs in enumerate(sent_idx_arrays):
+        vec_sents[i] = unpadded[ixs]
+        word_sents[i] = readable[ixs]
         # Multiply sentence length by num_classes + 1
-        one_hot_sents.append(one_hot_y[np.arange(ixs.size * n)])
+        # to get the correct shape and dim
+        one_hot_sents[i] = one_hot_y[np.arange(ixs.size * n)]
         vectorised_X = vectorised_X[len(ixs):]
 
     return {

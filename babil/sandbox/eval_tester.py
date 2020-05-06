@@ -25,6 +25,8 @@ from tensorflow.keras.optimizers import Adam
 from data.preprocessing import Dataset, WordTokeniser, LabelTokeniser, vectorise
 from sandbox.keras_metrics import BinaryTruePositives, BinaryTrueNegatives, BinaryFalsePositives, BinaryFalseNegatives
 from utils.config import set_global_seed, PathTracker
+from utils.helpers import flatten, y_dict, plot_grid
+from utils.metrics import get_analysis, evaluate, binary_analysis, proportional_analysis
 
 
 def mpl_setup():
@@ -133,17 +135,17 @@ def _fit(model: Model) -> History:
         keras.callbacks.EarlyStopping(
             monitor='val_loss',
             patience=3,
-            verbose=2
+            verbose=1
         ),
         keras.callbacks.EarlyStopping(
             monitor='val_accuracy',
             # min_delta=0.001,
             patience=3,
-            verbose=2
+            verbose=1
         ),
         keras.callbacks.ReduceLROnPlateau(
             monitor='val_loss',
-            factor=0.2,
+            factor=0.1,
             patience=5,
             min_lr=1e-3,
             verbose=1
@@ -246,22 +248,11 @@ if __name__ == '__main__':
         keras_metrics.FalseNegatives(name='fn'),
         keras_metrics.Precision(name='precision'),
         keras_metrics.Recall(name='recall'),
-        BinaryTruePositives(name='btp'),
-        BinaryTrueNegatives(name='btn'),
-        BinaryTruePositives(name='bfn'),
-        BinaryFalseNegatives(name='bfn')
+        # BinaryTruePositives(name='btp'),
+        # BinaryTrueNegatives(name='btn'),
+        # BinaryFalsePositives(name='bfp'),
+        # BinaryFalseNegatives(name='bfn')
     ]
-    '''
-        BinaryTruePositives(name='tp'),
-        BinaryTrueNegatives(name='tn'),
-        BinaryTruePositives(name='fn'),
-        BinaryFalseNegatives(name='fn'),
-        'categorical_accuracy',     # CategoricalAccuracy()
-        'binary_true_positives',    # TP = BinaryTruePositives()
-        'binary_true_negatives',    # TN = BinaryTrueNegatives()
-        'binary_false_positives',   # FP = BinaryFalsePositives()
-        'binary_false_negatives'    # FN = BinaryFalseNegatives()
-    '''
 
     __load__ = input('Load model? [Y] / N')
     if __load__.capitalize() != 'N':
@@ -277,32 +268,17 @@ if __name__ == '__main__':
     # Get predictions
     predictions = model.predict(X_dev)
 
-    y_gold = humanfriendlify(y_dev, label_tokeniser)
-    y_pred = humanfriendlify(predictions, label_tokeniser)
+    y_pred = y_dict(X_dev, predictions, label_tokeniser.index_word)
+    y_gold = y_dict(X_dev, y_dev, label_tokeniser.index_word)
 
-    # We do not want to evaluate predictions
-    # for padding tokens, so we discard them:
-    words = np.array([y for x in X_dev for y in x])
-    real_tokens = np.where(words != 0.0)[0]
-    y_test_real = y_gold[real_tokens]
-    flattened_predictions = y_pred[real_tokens]
+    # print('Classification report for the dev set:')
+    # print(classification_report(y_test_real, flattened_predictions))
 
-    print('Classification report for the dev set:')
-    print(classification_report(y_test_real, flattened_predictions))
-
-    # To turn flattened list into sentences again:
-    index_arrays = [np.arange(len(_)) for _ in [np.where(word != 0.0)[0] for word in X_dev]]
-    sentences = []
-    for ixs in index_arrays:
-        sentences.append(words[ixs])
-        words = words[len(ixs):]
-    # eval_on_test(filepath=join(path_to.models, 'mini.h5'))
-
-    plot_results(results, path_to.figures, 'binary_accuracy', model.name)
-    plot_results(results, path_to.figures, 'loss', model.name)
-    plot_results(results, path_to.figures, 'precision', model.name)
-    plot_results(results, path_to.figures, 'recall', model.name)
-    plot_results(results, path_to.figures, 'tp', model.name)
-    plot_results(results, path_to.figures, 'fp', model.name)
-    plot_results(results, path_to.figures, 'fn', model.name)
-    plot_results(results, path_to.figures, 'tn', model.name)
+    # plot_results(results, path_to.figures, 'binary_accuracy', model.name)
+    # plot_results(results, path_to.figures, 'loss', model.name)
+    # plot_results(results, path_to.figures, 'precision', model.name)
+    # plot_results(results, path_to.figures, 'recall', model.name)
+    # plot_results(results, path_to.figures, 'tp', model.name)
+    # plot_results(results, path_to.figures, 'fp', model.name)
+    # plot_results(results, path_to.figures, 'fn', model.name)
+    # plot_results(results, path_to.figures, 'tn', model.name)

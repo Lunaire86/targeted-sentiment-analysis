@@ -126,20 +126,27 @@ def binary_analysis(prediction_analysis):
     return f1
 
 
-def proportional_analysis(flat_gold_labels, flat_predictionictions):
+def proportional_analysis(flat_gold_labels, flat_predictions):
     target_labels = [1, 2, 3, 4]
 
-    print("Proportional results:")
-    print("#" * 80)
-    print()
+    print(f'Proportional results:\n{"#" * 80}\n')
 
     # Targets
-    precision = precision_score(flat_gold_labels, flat_predictionictions,
-                                labels=target_labels, average="micro")
-    recall = recall_score(flat_gold_labels, flat_predictionictions,
-                          labels=target_labels, average="micro")
-    f1 = f1_score(flat_gold_labels, flat_predictionictions,
-                  labels=target_labels, average="micro")
+    precision = precision_score(
+        flat_gold_labels, flat_predictions,
+        labels=target_labels,
+        average="micro"
+    )
+    recall = recall_score(
+        flat_gold_labels, flat_predictions,
+        labels=target_labels,
+        average="micro"
+    )
+    f1 = f1_score(
+        flat_gold_labels, flat_predictions,
+        labels=target_labels,
+        average="micro"
+    )
 
     print(f"Target precision: {precision:.3f}")
     print(f"Target recall: {recall:.3f}")
@@ -190,3 +197,18 @@ def get_analysis(sentences, y_prediction, y_test):
         prediction_analysis[idx]["prediction"]["target"] = target
 
     return prediction_analysis
+
+
+def evaluate(y_gold, y_pred, sentences):
+    """
+    Returns the binary and proportional F1 scores of the model on the examples passed via test_loader.
+    :param test_loader: torch.utils.data.DataLoader object with
+                        batch_size=1
+    """
+    flat_preds = [int(value) for sublist in y_pred for value in sublist]
+    flat_golds = [int(value) for sublist in y_gold for value in sublist]
+
+    analysis = get_analysis(sentences, y_pred, y_gold)
+    binary_f1 = binary_analysis(analysis)
+    propor_f1 = proportional_analysis(flat_golds, flat_preds)
+    return binary_f1, propor_f1
