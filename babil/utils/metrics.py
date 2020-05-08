@@ -14,78 +14,92 @@ from utils.helpers import y_dict
 class Metrics:
     # We're only using these to instantiate the class
     X: InitVar[np.ndarray]
-    y_gold: InitVar[np.ndarray]
+    y_true: InitVar[np.ndarray]
     y_pred: InitVar[np.ndarray]
     idx2label: InitVar[Dict[int, str]]
+    majority_class: InitVar[str] = 'O'
 
-    # Create a dict that lets us access predictions
+    # Create dictionaries that lets us access predictions
     # and targets in a number of different formats.
-    __dict__: Dict[str, Dict[str, Dict[str, np.ndarray]]] = field(init=False, default_factory=dict)
+    pred: Dict[str, Dict[str, Dict[str, np.ndarray]]] = field(init=False, default_factory=dict)
+    gold: Dict[str, Dict[str, Dict[str, np.ndarray]]] = field(init=False, default_factory=dict)
 
     # Binary and proportional metrics stored as namedtuples
     binary: NamedTuple = field(init=False)
     regular: NamedTuple = field(init=False)
-    samples: NamedTuple = field(init=False)
+    # samples: NamedTuple = field(init=False)
 
     # Multiclass confusion matrix
     cfm: np.ndarray = field(init=False)
+    cfm_excluding_majority: str = field(init=False)
 
     # Classification report
     report: str = field(init=False)
+    report_excluding_majority: str = field(init=False)
 
-    def __post_init__(self, X, y_true, y_pred, idx2label):
+    def __post_init__(self, X, y_true, y_pred, idx2label, majority_class):
         # Use InitVars to create internal dictionary
-        self.__dict__ = create_dict(y_true, y_pred, X, idx2label)
+        self.gold = y_dict(X, y_true, idx2label)
+        self.pred = y_dict(X, y_pred, idx2label)
+
+        # Since we don't know which indices correspond to the labels
+        # we are interested in, we don't want to hardcode these
+        num_labels = [_ for _ in idx2label.keys()]
+        str_labels = [_ for _ in idx2label.values()]
+
+        num_classes = [
+            idx for (idx, val) in idx2label.items()
+            if val != majority_class
+        ]
+        str_classes = [
+            val for (idx, val) in idx2label.items()
+            if val != majority_class
+        ]
 
         # Calculate binary scores (minority vs majority)
         self.binary = binary_scores(
-            y_true=self.__dict__['gold']['flat']['binary'],
-            y_pred=self.__dict__['pred']['flat']['binary']
+            y_true=self.gold['flat']['binary'],
+            y_pred=self.pred['flat']['binary']
         )
 
         # Calculate proportional scores amongst minority classes
         self.regular = proportional_scores(
-            y_true=self.__dict__['gold']['flat']['vectorised'],
-            y_pred=self.__dict__['pred']['flat']['vectorised'],
-            idx2label=idx2label
+            y_true=self.gold['flat']['vectorised'],
+            y_pred=self.pred['flat']['vectorised'],
+            labels=num_classes
         )
 
-        # Calculate metrics for each class, and find their average
-        self.samples = proportional_scores(
-            y_true=self.__dict__['gold']['flat']['vectorised'],
-            y_pred=self.__dict__['pred']['flat']['vectorised'],
-            idx2label=idx2label,
-            average='samples')
-
         # Generate a multiclass confusion matrix
-        labels = set(idx2label.values())
-        labels.discard('<PAD>')
+        labels = [_ for _ in idx2label.values()]
         self.cfm = multilabel_confusion_matrix(
-            y_true=self.__dict__['gold']['flat']['readable'],
-            y_pred=self.__dict__['pred']['flat']['readable'],
-            labels=labels
+            y_true=self.gold['flat']['readable'],
+            y_pred=self.pred['flat']['readable'],
+            labels=str_classes
         )
 
         # Generate a classification report
         self.report = classification_report(
-            y_true=self.__dict__['gold']['flat']['readable'],
-            y_pred=self.__dict__['pred']['flat']['readable'],
-            labels=labels
+            y_true=self.gold['flat']['readable'],
+            y_pred=self.pred['flat']['readable'],
+            labels=str_classes
         )
 
+        # Generate a multiclass confusion matrix
+        # without including the majority class
+        self.cfm_excluding_majority = multilabel_confusion_matrix(
+            y_true=self.gold['flat']['readable'],
+            y_pred=self.pred['flat']['readable'],
+            labels=str_labels
+        )
 
+        # Generate a classification report
+        # without including the majority class
+        self.report_excluding_majority = classification_report(
+            y_true=self.gold['flat']['readable'],
+            y_pred=self.pred['flat']['readable'],
+            labels=str_labels
+        )
 
-def create_dict(y_pred: np.ndarray,
-                y_gold: np.ndarray,
-                X: np.ndarray,
-                idx2label: Dict[int, str]) -> Dict[str, Dict[Any, Any]]:
-
-    predictions_dict = {
-        'pred': y_dict(X, y_pred, idx2label),
-        'gold': y_dict(X, y_gold, idx2label)
-    }
-
-    return predictions_dict
 
 
 def binary_precision(y_true, y_pred):
@@ -126,44 +140,36 @@ def binary_scores(y_true, y_pred):
     recall = binary_recall(y_true, y_pred)
     f1 = binary_f1(y_true, y_pred)
 
-    return Binary(precision, recall, f1)
+    return Binary(
+        round(precision, 4), round(recall, 4), round(f1, 4)
+    )
 
 
-def proportional_scores(y_true, y_pred, idx2label, average: str = 'micro'):
+def proportional_scores(y_true, y_pred, labels):
 
     Proportional = namedtuple(
         'Proportional', 'precision recall f1'
     )
 
-    # Since we don't know which indices correspond to the labels
-    # we are interested in, we exclude padding and the majority class,
-    # and generate a list containing the rest, in arbitrary order
-    excluded = ['<PAD>', 'O']
-    labels = [
-        idx for (idx, val) in idx2label.items()
-        if val not in excluded
-    ]
-
     precision = precision_score(
         y_true, y_pred,
         labels=labels,
-        average=average,
-        zero_division='warn'  # alternatively 0 or 1
+        average='micro'
     )
     recall = recall_score(
         y_true, y_pred,
         labels=labels,
-        average=average,
-        zero_division='warn'  # alternatively 0 or 1
+        average='micro'
     )
     f1 = f1_score(
         y_true, y_pred,
         labels=labels,
-        average=average,
-        zero_division='warn'  # alternatively 0 or 1
+        average='micro'
     )
 
-    return Proportional(precision, recall, f1)
+    return Proportional(
+        round(precision, 4), round(recall, 4), round(f1, 4)
+    )
 
 
 if __name__ == '__main__':
@@ -186,4 +192,45 @@ if __name__ == '__main__':
     print(f'true: {more_ones}\npred: {ones}\n{binary_scores(more_ones, ones)}\n')
     print(f'true: {ones}\npred: {more_ones}\n{binary_scores(ones, more_ones)}\n')
     print(f'true: {more_zeros}\npred: {more_ones}\n{binary_scores(more_zeros, more_ones)}\n')
+
+    idx2lab = {
+        1: 'O',
+        2: 'B',
+        3: 'A',
+        4: 'C'
+    }
+
+    true_labels = [
+        ['O', 'O', 'O', 'O', 'O'],
+        ['A', 'O', 'O', 'O', 'A'],
+        ['O', 'B', 'O', 'O', 'C'],
+        ['O', 'O', 'O', 'O', 'C']
+    ]
+
+    gold = [
+        [1, 1, 1, 1, 1],
+        [3, 1, 1, 1, 3],
+        [1, 2, 1, 1, 4],
+        [1, 1, 1, 1, 4]
+    ]
+
+    pred = [
+        [1, 1, 1, 4, 1],
+        [2, 1, 1, 1, 3],
+        [1, 2, 1, 1, 4],
+        [1, 3, 3, 2, 4]
+    ]
+
+    flat_pred = np.array([
+        _ for tokens
+        in pred
+        for _ in tokens
+    ])
+
+    flat_gold = np.array([
+        _ for tokens
+        in gold
+        for _ in tokens
+    ])
+
 

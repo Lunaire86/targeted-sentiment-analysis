@@ -100,37 +100,44 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
 
     if args.load:
         # Load checkpoint model from previous run
-        model, results = Baseline.load(path_to.models)
+        bilstm = Baseline.load(path_to.models)
+        # bilstm = keras.models.load_model(join(path_to.models, 'baseline_checkpoint.20.h5'))
+        predictions = bilstm.predict(X_dev)
+
     else:
         # Build and train the baseline model
-        model = Baseline(args, path_to, weights)
-        model.build()
-        model.train(X_train, y_train, X_dev, y_dev)
-        # model.save(path_to.models)
+        bilstm = Baseline(args, path_to, weights)
+        bilstm.build()
+        bilstm.train(X_train, y_train, X_dev, y_dev)
+        bilstm.save(path_to.models, name='baseline.300.h5')
 
-    # Get predictions
-    predictions = model.predict(X_dev)
 
-    # Save predictions and y_dev so we can load for evaluation if needs be
-    pred_path = join(path_to.data, f'{basename}_pred.npy')
-    gold_path = join(path_to.data, f'{basename}_gold.npy')
-    np.save(pred_path, predictions)
-    np.save(gold_path, y_dev)
+        # Get predictions
+        predictions = bilstm.predict(X_dev)
+
+        # Save predictions and y_dev so we can load for evaluation if needs be
+        pred_path = join(path_to.data, f'{basename}_pred.npy')
+        gold_path = join(path_to.data, f'{basename}_gold.npy')
+        np.save(pred_path, predictions)
+        np.save(gold_path, y_dev)
 
     metrics = Metrics(X_dev, y_dev, predictions, label_tokeniser.index_word)
 
-    metrics_path = join(path_to.data, f'{basename}_metrics.pickle')
-    mode = 'wb' if os.path.exists(metrics_path) else 'xb'
-    with open(metrics_path, mode) as f:
-        pickle.dump(metrics, f)
+    # metrics_path = join(path_to.data, f'{basename}_metrics.pickle')
+    # mode = 'wb' if os.path.exists(metrics_path) else 'xb'
+    # with open(metrics_path, mode) as f:
+    #     pickle.dump(metrics, f)
 
-    print(f'\n\nClassification report for the dev set:{metrics.report}\n\n')
+    print(f'\n\nBinary scores:\n{metrics.binary}')
+    print(f'\n\nProportional scores scores:\n{metrics.regular}\n\n')
+    print(f'\n\nClassification report for the dev set (excluding "O"):\n{metrics.report}')
+    print(f'\n\nClassification report for the dev set (including "O"):\n{metrics.report}')
 
-    plot_results(model.results, path_to.figures, 'baseline', 'accuracy')
-    plot_results(model.results, path_to.figures, 'baseline', 'binary_accuracy')
-    plot_results(model.results, path_to.figures, 'baseline', 'loss')
-    plot_results(model.results, path_to.figures, 'baseline', 'precision')
-    plot_results(model.results, path_to.figures, 'baseline', 'recall')
+    # plot_results(bilstm.results, path_to.figures, 'baseline', 'accuracy')
+    # plot_results(bilstm.results, path_to.figures, 'baseline', 'binary_accuracy')
+    # plot_results(bilstm.results, path_to.figures, 'baseline', 'loss')
+    # plot_results(bilstm.results, path_to.figures, 'baseline', 'precision')
+    # plot_results(bilstm.results, path_to.figures, 'baseline', 'recall')
 
 
 def baseline_eval(parsed_args: Namespace, paths: PathTracker):
@@ -211,8 +218,6 @@ if __name__ == '__main__':
     model: Model = keras.models.load_model(smol_mod)
     predictions = model.predict(X_dev, batch_size=1)
 
-    y_pred = y_dict(X_dev, predictions, label_tokeniser.index_word)
-    y_gold = y_dict(X_dev, y_dev, label_tokeniser.index_word)
 
     # plot_results(model.results, path_to.figures, 'smol', 'accuracy')
     # plot_results(model.results, path_to.figures, 'smol', 'binary_accuracy')
