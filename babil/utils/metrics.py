@@ -212,3 +212,8 @@ def evaluate(y_gold, y_pred, sentences):
     binary_f1 = binary_analysis(analysis)
     propor_f1 = proportional_analysis(flat_golds, flat_preds)
     return binary_f1, propor_f1
+
+# sum(map(np.logical_and, foo, bar)) TP
+# sum(map(np.logical_and, np.logical_not(foo), np.logical_not(bar))) TN
+# sum(map(np.logical_and, np.logical_not(foo), bar)) FN
+# sum(map(np.logical_and, np.logical_not(bar), foo)) FP
