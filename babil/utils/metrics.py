@@ -1,219 +1,189 @@
 #!/usr/bin/env python3
 # coding: utf-8
+from collections import namedtuple
+from dataclasses import dataclass, field, InitVar
+from typing import Any, Dict, NamedTuple
 
-from sklearn.metrics import precision_score, recall_score, f1_score
+import numpy as np
+from sklearn.metrics import precision_score, recall_score, f1_score, multilabel_confusion_matrix, classification_report
 
-
-def binary_true_pos(target, prediction):
-    """
-    For each member in prediction, if it overlaps with any member of target,
-    return 1
-    else return 0
-    """
-    true_positives = 0
-
-    for pred in prediction:
-        true_positive = False
-
-        for word in pred:
-            for span in target:
-
-                if word in span:
-                    true_positive = True
-
-        if true_positive is True:
-            true_positives += 1
-
-    return true_positives
+from utils.helpers import y_dict
 
 
-def binary_false_neg(target, prediction):
-    """
-    If there is any member of target that overlaps with no member of prediction,
-    return 1
-    else return 0
-    """
-    false_negatives = 0
+@dataclass
+class Metrics:
+    # We're only using these to instantiate the class
+    X: InitVar[np.ndarray]
+    y_gold: InitVar[np.ndarray]
+    y_pred: InitVar[np.ndarray]
+    idx2label: InitVar[Dict[int, str]]
 
-    for pred in target:
-        false_negative = True
+    # Create a dict that lets us access predictions
+    # and targets in a number of different formats.
+    __dict__: Dict[str, Dict[str, Dict[str, np.ndarray]]] = field(init=False, default_factory=dict)
 
-        for word in pred:
-            for span in prediction:
+    # Binary and proportional metrics stored as namedtuples
+    binary: NamedTuple = field(init=False)
+    regular: NamedTuple = field(init=False)
+    samples: NamedTuple = field(init=False)
 
-                if word in span:
-                    false_negative = False
+    # Multiclass confusion matrix
+    cfm: np.ndarray = field(init=False)
 
-        if false_negative is True:
-            false_negatives += 1
+    # Classification report
+    report: str = field(init=False)
 
-    return false_negatives
+    def __post_init__(self, X, y_true, y_pred, idx2label):
+        # Use InitVars to create internal dictionary
+        self.__dict__ = create_dict(y_true, y_pred, X, idx2label)
 
+        # Calculate binary scores (minority vs majority)
+        self.binary = binary_scores(
+            y_true=self.__dict__['gold']['flat']['binary'],
+            y_pred=self.__dict__['pred']['flat']['binary']
+        )
 
-def binary_false_pos(target, prediction):
-    """
-    If there is any member of prediction that overlaps with
-    no member of target,
-    return 1
-    else return 0
-    """
-    false_positves = 0
+        # Calculate proportional scores amongst minority classes
+        self.regular = proportional_scores(
+            y_true=self.__dict__['gold']['flat']['vectorised'],
+            y_pred=self.__dict__['pred']['flat']['vectorised'],
+            idx2label=idx2label
+        )
 
-    for pred in prediction:
-        false_positive = True
+        # Calculate metrics for each class, and find their average
+        self.samples = proportional_scores(
+            y_true=self.__dict__['gold']['flat']['vectorised'],
+            y_pred=self.__dict__['pred']['flat']['vectorised'],
+            idx2label=idx2label,
+            average='samples')
 
-        for word in pred:
-            for span in target:
+        # Generate a multiclass confusion matrix
+        labels = set(idx2label.values())
+        labels.discard('<PAD>')
+        self.cfm = multilabel_confusion_matrix(
+            y_true=self.__dict__['gold']['flat']['readable'],
+            y_pred=self.__dict__['pred']['flat']['readable'],
+            labels=labels
+        )
 
-                if word in span:
-                    false_positive = False
-
-        if false_positive is True:
-            false_positves += 1
-
-    return false_positves
-
-
-def binary_precision(annotations, annotation_type='source'):
-    true_positives = 0
-    false_negatives = 0
-
-    for _, ann in annotations.items():
-        target = ann["target"][annotation_type]
-        prediction = ann["prediction"][annotation_type]
-
-        true_positives += binary_true_pos(target, prediction)
-        false_negatives += binary_false_pos(target, prediction)
-
-    return true_positives / (true_positives + false_negatives + 10 ** -10)
-
-
-def binary_recall(annotations, annotation_type='source'):
-    true_positives = 0
-    false_negatives = 0
-
-    for _, ann in annotations.items():
-        target = ann["target"][annotation_type]
-        prediction = ann["prediction"][annotation_type]
-
-        true_positives += binary_true_pos(target, prediction)
-        false_negatives += binary_false_neg(target, prediction)
-
-    return true_positives / (true_positives + false_negatives + 10 ** -10)
+        # Generate a classification report
+        self.report = classification_report(
+            y_true=self.__dict__['gold']['flat']['readable'],
+            y_pred=self.__dict__['pred']['flat']['readable'],
+            labels=labels
+        )
 
 
-def binary_f1(annotations, annotation_type='source'):
-    precision = binary_precision(annotations, annotation_type)
-    recall = binary_recall(annotations, annotation_type)
 
+def create_dict(y_pred: np.ndarray,
+                y_gold: np.ndarray,
+                X: np.ndarray,
+                idx2label: Dict[int, str]) -> Dict[str, Dict[Any, Any]]:
+
+    predictions_dict = {
+        'pred': y_dict(X, y_pred, idx2label),
+        'gold': y_dict(X, y_gold, idx2label)
+    }
+
+    return predictions_dict
+
+
+def binary_precision(y_true, y_pred):
+
+    true_positives = sum(map(np.logical_and, y_pred, y_true))
+    false_posiives = sum(map(np.logical_and, np.logical_not(y_true), y_pred))
+
+    # Deal with zero division issues if they arise
+    sum_ = true_positives + false_posiives
+    divisor = sum_ if sum_ else sum_ + 10 ** -10
+    return true_positives / divisor
+
+
+def binary_recall(y_true, y_pred) -> float:
+
+    true_positives = sum(map(np.logical_and, y_pred, y_true))
+    false_negatives = sum(map(np.logical_and, np.logical_not(y_pred), y_true))
+
+    # Deal with zero division issues if they arise
+    sum_ = true_positives + false_negatives
+    divisor = sum_ if sum_ else sum_ + 10 ** -10
+    return true_positives / divisor
+
+
+def binary_f1(y_true, y_pred) -> float:
+    precision = binary_precision(y_true, y_pred)
+    recall = binary_recall(y_true, y_pred)
     return 2 * ((precision * recall) / (precision + recall))
 
 
-def binary_analysis(prediction_analysis):
-    print("Binary results:")
-    print("#" * 80)
-    print()
+def binary_scores(y_true, y_pred):
 
-    # Targets
-    precision = binary_precision(prediction_analysis, "target")
-    recall = binary_recall(prediction_analysis, "target")
-    f1 = binary_f1(prediction_analysis, "target")
+    Binary = namedtuple(
+        'Binary', 'precision recall f1'
+    )
 
-    print(f"Target precision: {precision:.3f}")
-    print(f"Target recall: {recall:.3f}")
-    print(f"Target F1: {f1:.3f}\n")
+    precision = binary_precision(y_true, y_pred)
+    recall = binary_recall(y_true, y_pred)
+    f1 = binary_f1(y_true, y_pred)
 
-    return f1
+    return Binary(precision, recall, f1)
 
 
-def proportional_analysis(flat_gold_labels, flat_predictions):
-    target_labels = [1, 2, 3, 4]
+def proportional_scores(y_true, y_pred, idx2label, average: str = 'micro'):
 
-    print(f'Proportional results:\n{"#" * 80}\n')
+    Proportional = namedtuple(
+        'Proportional', 'precision recall f1'
+    )
 
-    # Targets
+    # Since we don't know which indices correspond to the labels
+    # we are interested in, we exclude padding and the majority class,
+    # and generate a list containing the rest, in arbitrary order
+    excluded = ['<PAD>', 'O']
+    labels = [
+        idx for (idx, val) in idx2label.items()
+        if val not in excluded
+    ]
+
     precision = precision_score(
-        flat_gold_labels, flat_predictions,
-        labels=target_labels,
-        average="micro"
+        y_true, y_pred,
+        labels=labels,
+        average=average,
+        zero_division='warn'  # alternatively 0 or 1
     )
     recall = recall_score(
-        flat_gold_labels, flat_predictions,
-        labels=target_labels,
-        average="micro"
+        y_true, y_pred,
+        labels=labels,
+        average=average,
+        zero_division='warn'  # alternatively 0 or 1
     )
     f1 = f1_score(
-        flat_gold_labels, flat_predictions,
-        labels=target_labels,
-        average="micro"
+        y_true, y_pred,
+        labels=labels,
+        average=average,
+        zero_division='warn'  # alternatively 0 or 1
     )
 
-    print(f"Target precision: {precision:.3f}")
-    print(f"Target recall: {recall:.3f}")
-    print(f"Target F1: {f1:.3f}\n")
-
-    return f1
+    return Proportional(precision, recall, f1)
 
 
-def get_analysis(sentences, y_prediction, y_test):
-    prediction_analysis = {}
+if __name__ == '__main__':
+    ones = np.ones((10,), dtype=int)
+    zeros = np.zeros((10,), dtype=int)
+    more_ones = np.r_[ones[:7], zeros[:3]]
+    more_zeros = np.r_[zeros[:7], ones[:3]]
 
-    for idx, (sentence, prediction, target) in enumerate(zip(sentences, y_prediction, y_test)):
-        target = []
-        label = None
+    print(f'ones:       {ones}')
+    print(f'zeros:      {zeros}')
+    print(f'more_ones:  {more_ones}')
+    print(f'more_zeros: {more_zeros}')
 
-        # Targets
-        for idx, pred in enumerate(prediction):
-            if pred > 0:
-                if not label:
-                    label = [sentence[idx]]
-                else:
-                    label.append(sentence[idx])
-            else:
-                if label:
-                    target.append(label)
-                    label = None
+    print('\n\n')
 
-        gold_target = []
-        label = None
+    print(f'true: {ones}\npred: {ones}\n{binary_scores(ones, ones)}\n')
+    print(f'true: {ones}\npred: {zeros}\n{binary_scores(ones, zeros)}\n')
+    print(f'true: {zeros}\npred: {ones}\n{binary_scores(zeros, ones)}\n')
+    print(f'true: {zeros}\npred: {zeros}\n{binary_scores(zeros, zeros)}\n')
+    print(f'true: {more_ones}\npred: {ones}\n{binary_scores(more_ones, ones)}\n')
+    print(f'true: {ones}\npred: {more_ones}\n{binary_scores(ones, more_ones)}\n')
+    print(f'true: {more_zeros}\npred: {more_ones}\n{binary_scores(more_zeros, more_ones)}\n')
 
-        # Targets
-        for idx, pred in enumerate(target):
-            if pred > 0:
-                if not label:
-                    label = [sentence[idx]]
-                else:
-                    label.append(sentence[idx])
-            else:
-                if label:
-                    gold_target.append(label)
-                    label = None
-
-        prediction_analysis[idx] = {}
-        prediction_analysis[idx]["sentence"] = [token for token in sentence]
-        prediction_analysis[idx]["gold"] = {}
-        prediction_analysis[idx]["gold"]["target"] = gold_target
-        prediction_analysis[idx]["prediction"] = {}
-        prediction_analysis[idx]["prediction"]["target"] = target
-
-    return prediction_analysis
-
-
-def evaluate(y_gold, y_pred, sentences):
-    """
-    Returns the binary and proportional F1 scores of the model on the examples passed via test_loader.
-    :param test_loader: torch.utils.data.DataLoader object with
-                        batch_size=1
-    """
-    flat_preds = [int(value) for sublist in y_pred for value in sublist]
-    flat_golds = [int(value) for sublist in y_gold for value in sublist]
-
-    analysis = get_analysis(sentences, y_pred, y_gold)
-    binary_f1 = binary_analysis(analysis)
-    propor_f1 = proportional_analysis(flat_golds, flat_preds)
-    return binary_f1, propor_f1
-
-# sum(map(np.logical_and, foo, bar)) TP
-# sum(map(np.logical_and, np.logical_not(foo), np.logical_not(bar))) TN
-# sum(map(np.logical_and, np.logical_not(foo), bar)) FN
-# sum(map(np.logical_and, np.logical_not(bar), foo)) FP
