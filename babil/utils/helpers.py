@@ -55,7 +55,9 @@ def y_dict(X: np.ndarray, y: np.ndarray,
     vectorised_X = flatten(X, decode=True)
 
     unpadded = vectorised_y[pad_idx_arr]
-    binary = np.where(unpadded > 0, 1, 0)
+    lab2idx = dict(zip(idx2lab.values(), idx2lab.keys()))
+    majority_idx = lab2idx['O']
+    binary = np.where(unpadded != majority_idx, 1, 0)
     readable = np.array([idx2lab[i] for i in unpadded])
 
     n = num_classes + 1

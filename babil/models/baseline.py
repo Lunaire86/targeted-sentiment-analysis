@@ -162,10 +162,14 @@ class Baseline:
             callbacks=self.callbacks
         )
 
-    @staticmethod
-    def save(model, path: str, name: str = 'baseline.h5') -> None:
+    def save(self, path: str, name: str = 'baseline.h5') -> None:
         """Save model."""
-        model.save(join(path, name))
+        self.model.save(join(path, name))
+        # Save training metrics too
+        metrics = np.array([
+            self.results.history[_] for _ in self.results.history.keys()
+        ])
+        np.save(join(path, f'{name}_metrics.npy'), metrics)
 
     @staticmethod
     def load(path: str, checkpoint: bool = True) -> Tuple[Model, History]:
@@ -176,7 +180,7 @@ class Baseline:
         else:
             model = keras.models.load_model(join(path, 'baseline.h5'))
 
-        return model, model.history
+        return model
 
     def predict(self, *args, **kwargs):
         """Predict."""
