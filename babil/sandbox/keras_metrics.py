@@ -97,27 +97,6 @@ class BinaryFalseNegatives(Metric):
         return self.false_negatives
 
 
-class F1(Metric):
-
-    def __init__(self, name='f1', **kwargs):
-        super(BinaryFalseNegatives, self).__init__(name=name, **kwargs)
-        self.false_negatives = self.add_weight(name='fn', initializer='zeros')
-
-    def update_state(self, y_true, y_pred, sample_weight=None):
-        y_true = tf.cast(y_true, tf.bool)
-        y_pred = tf.cast(y_pred, tf.bool)
-
-        values = tf.logical_and(tf.equal(y_true, True), tf.equal(y_pred, False))
-        values = tf.cast(values, self.dtype)
-        if sample_weight is not None:
-            sample_weight = tf.cast(sample_weight, self.dtype)
-            sample_weight = tf.expand_dims(sample_weight, axis=2)
-            values = tf.multiply(values, sample_weight)
-        self.false_negatives.assign_add(tf.reduce_sum(values))
-
-    def result(self):
-        return self.false_negatives
-
 
 def get_analysis(y_pred, y_gold, sentences) -> Dict[int, Dict[Any, Any]]:
     prediction_analysis = {}
@@ -193,18 +172,37 @@ def proportional_analysis(flat_gold_labels, flat_predictions):
     return f1
 
 
-def binary_precision(prediction_analysis):
-    true_positives = 0
-    false_negatives = 0
+def binary_precision(flat_binary_pred, flat_binary_gold):
+    pred = flat_binary_pred
+    gold = flat_binary_gold
 
-    for sentence in prediction_analysis.values():
-        gold = sentence['true_label']['target']
-        pred = sentence['predicted_label']['target']
+    true_positives = sum(map(np.logical_and, pred, gold))
+    false_posiives = sum(map(np.logical_and, np.logical_not(gold), pred))
 
-        true_positives += binary_true_pos(gold, pred)
-        false_negatives += binary_false_pos(gold, pred)
+    return true_positives / (true_positives + false_posiives + 10 ** -10)
 
-    return true_positives / (true_positives + false_negatives + 10 ** -10)
+
+def binary_recall(flat_binary_pred, flat_binary_gold):
+    pred = flat_binary_pred
+    gold = flat_binary_gold
+
+    true_positives = sum(map(np.logical_and, pred, gold))
+    false_negatives = sum(map(np.logical_and, np.logical_not(pred), gold))
+
+    for _, ann in annotations.items():
+        target = ann["target"][annotation_type]
+        prediction = ann["prediction"][annotation_type]
+
+        true_positives += binary_true_pos(target, prediction)
+        false_negatives += binary_false_neg(target, prediction)
+
+    return true_positives / (true_positives + false_negatives + (10 ** -10))
+
+
+def binary_f1(anns, anntype="source"):
+    prec = binary_precision(anns, anntype)
+    rec = binary_recall(anns, anntype)
+    return 2 * ((prec * rec) / (prec + rec))
 
 def binary_analysis(prediction_analysis):
     print(f'Binary results:\n{"#" * 80}\n')

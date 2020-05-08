@@ -3,10 +3,10 @@ title: 'Visualisation of data'
 author: 'Maria Singstad Paulsen'
 date: '`r format(Sys.Date(), "%Y-%B-%d")`'
 output:
-    pdf_document:
+    ptrain_document:
         fig_width: 5
         fig_height: 3.5
-        df_print: kable
+        train_print: kable
         highlight: tango
         # default tango pygments kate monochrome espresso zenburn haddock breezedark
     fontsize: 12pt
@@ -42,6 +42,7 @@ knitr::knit_hooks$set(document = function(x) {
 library(car)
 library(ggplot2)
 library(reticulate)
+# install.packages("NLP")
 ```
 
 Load some NLP related packages / libraries
@@ -52,22 +53,66 @@ library(tidytext) # tidy implimentation of NLP methods
 library(tm) # general text mining functions, making document term matrixes
 library(SnowballC) # for stemming
 library(caTools) # moving window statistics, ROC, AUC
+library(udpipe)
+library(NLP)
 ```
 
 Load the training data.
 ```{r, echo = F, warning = F, message = F}
-df <- read.delim('/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll', header = F, quote = "", col.names = c('token', 'tag'))
-summary(df); cat('\n')
-str(df)
+train <- read.delim('/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll', header = F, quote = "", col.names = c('token', 'tag'))
+summary(train); cat('\n')
+str(train)
 ```
+
+Load the development data.
+```{r, echo = F, warning = F, message = F}
+dev <- read.delim('/home/fero/Desktop/nlp/in5550_exam/data/raw/dev.conll', header = F, quote = "", col.names = c('token', 'tag'))
+summary(dev); cat('\n')
+str(dev)
+```
+
+
 Group "B-targ-Negative" with "I-targ-Negative", and "B-targ-Positive" with "I-targ-Positive". We want to inspect whether the data is skewed.
 ```{r}
-df$polarity <- factor(df$tag, levels = levels(df$tag), labels = c('Negative', 'Positive', 'Negative', 'Positive', 'O'))
-summary(df$polarity)
+train$polarity <- factor(train$tag, levels = levels(train$tag), labels = c('Negative', 'Positive', 'Negative', 'Positive', 'O'))
+dev$polarity <- factor(dev$tag, levels = levels(dev$tag), labels = c('Negative', 'Positive', 'Negative', 'Positive', 'O'))
+cat('Train\n'); summary(train$polarity); cat('\n')
+cat('Dev\n'); summary(dev$polarity)
+```
+
+Group "B-targ-Negative" with "B-targ-Positive", and "I-targ-Negative" with "I-targ-Positive". We want to inspect whether the data is skewed.
+```{r}
+train$target <- factor(train$tag, levels = levels(train$tag), labels = c('B', 'B', 'I', 'I', 'O'))
+dev$target <- factor(dev$tag, levels = levels(dev$tag), labels = c('B', 'B', 'I', 'I', 'O'))
+cat('Train\n'); summary(train$target); cat('\n')
+cat('Dev\n'); summary(dev$target)
+```
+```{r}
+smol_train <- filter(train$tag != 'O')  # train$tag
 ```
 
 ```{r}
-plot(df$polarity)
+barplot(table(train$polarity, train$target))
+
+```
+
+```{r}
+barplot(table(dev$polarity, dev$target))
+```
+
+```{r}
+ggplot(train, aes(x = polarity, y = target, color = tag)) + 
+  geom_boxplot()
+
+```
+
+```{r}
+train_conll <- system.file(package = 'udpipe', '/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll')
+
+```
+
+```{r}
+dft <- CoNLLTextDocument(train_conll, encoding = "unknown", format = c(WORD = "WORD", TAG = "TAG"), meta = list())
 ```
 
 Now, click the **Run** button on the chunk toolbar to [execute](https://www.jetbrains.com/help/pycharm/r-markdown.html#run-r-code) the chunk code. The result should be placed under the chunk.
