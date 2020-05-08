@@ -1,6 +1,4 @@
 import torch
-import torch.nn as nn
-from torch.nn.utils.rnn import pad_packed_sequence, PackedSequence
 from torch.utils.data import DataLoader
 import numpy as np
 import os
@@ -8,11 +6,9 @@ import os
 from utils.bilstm import BiLSTM
 from utils.datasets import Vocab, ConllDataset
 from utils.wordembs import WordVecs
-from utils.metrics import binary_analysis, proportional_analysis, get_analysis
 
 import argparse
 import zipfile
-from tqdm import tqdm
 
 # class BiLSTM(nn.Module):
 #
