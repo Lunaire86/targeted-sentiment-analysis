@@ -55,16 +55,19 @@ def y_dict(X: np.ndarray, y: np.ndarray,
     vectorised_X = flatten(X, decode=True)
 
     unpadded = vectorised_y[pad_idx_arr]
+    binary = np.array([unpadded > 0, 1, unpadded])
     readable = np.array([idx2lab[i] for i in unpadded])
 
     n = num_classes + 1
     one_hot_sents = np.empty(shape=(len(X), n), dtype=np.ndarray)
     vec_sents = np.empty(shape=(len(X),), dtype=np.ndarray)
+    bin_sents = vec_sents.copy()
     word_sents = vec_sents.copy()
 
     for i, ixs in enumerate(sent_idx_arrays):
         vec_sents[i] = unpadded[ixs]
         word_sents[i] = readable[ixs]
+        bin_sents[i] = binary[ixs]
         # Multiply sentence length by num_classes + 1
         # to get the correct shape and dim
         one_hot_sents[i] = one_hot_y[np.arange(ixs.size * n)]
@@ -74,11 +77,13 @@ def y_dict(X: np.ndarray, y: np.ndarray,
         'flat': {
             'one-hot': one_hot_y,
             'vectorised': unpadded,
+            'binary': binary,
             'readable': readable
         },
         'sequential': {
             'one-hot': one_hot_sents,
             'vectorised': vec_sents,
+            'binary': binary,
             'readable': word_sents
         }
     }
