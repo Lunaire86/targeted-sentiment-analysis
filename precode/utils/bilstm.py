@@ -8,7 +8,7 @@ import numpy as np
 
 from utils.datasets import Vocab, ConllDataset
 from utils.wordembs import WordVecs
-from utils.metrics import binary_analysis, proportional_analysis, get_analysis
+from sandbox.metrics import binary_analysis, proportional_analysis, get_analysis
 
 import argparse
 from tqdm import tqdm

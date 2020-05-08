@@ -9,24 +9,20 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import seaborn as sns
 import numpy as np
-from sklearn.metrics import classification_report
-import tensorflow as tf
 import tensorflow.keras as keras
 
 from tensorflow.keras.callbacks import History
-from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
-from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
-from tensorflow.keras.losses import BinaryCrossentropy, CategoricalCrossentropy, SparseCategoricalCrossentropy
+from tensorflow.keras.layers import Bidirectional, Dense, Embedding
+from tensorflow.keras.layers import Input, LSTM
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras import metrics as keras_metrics
-from tensorflow.keras.metrics import BinaryAccuracy, Metric, FalseNegatives, FalsePositives, TruePositives, Precision, Recall
+from tensorflow.keras.metrics import Metric
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
 from data.preprocessing import Dataset, WordTokeniser, LabelTokeniser, vectorise
-from sandbox.keras_metrics import BinaryTruePositives, BinaryTrueNegatives, BinaryFalsePositives, BinaryFalseNegatives
 from utils.config import set_global_seed, PathTracker
-from utils.helpers import flatten, y_dict, plot_grid
-from utils.metrics import get_analysis, evaluate, binary_analysis, proportional_analysis
+from utils.helpers import y_dict
 
 
 def mpl_setup():

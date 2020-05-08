@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 # coding: utf-8
-from typing import Dict, List, Any, Union
+from collections import namedtuple
+from dataclasses import field, InitVar, dataclass
+from typing import Dict, List, Any, Union, Tuple, NamedTuple
 
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 import tensorflow as tf
 from tensorflow.keras.metrics import Metric
+
+from utils.helpers import y_dict
 
 
 class BinaryTruePositives(Metric):
@@ -98,49 +102,17 @@ class BinaryFalseNegatives(Metric):
 
 
 
-def get_analysis(y_pred, y_gold, sentences) -> Dict[int, Dict[Any, Any]]:
-    prediction_analysis = {}
 
-    for sent_id, (prediction, gold, sentence) in enumerate(zip(y_pred, y_gold, sentences)):
-        predicted_targets = []
-        label = None
 
-        # Targets
-        for idx, pred in enumerate(prediction):
-            # TODO : is 'pred' a probability?
-            if pred > 0:
-                if not label:
-                    label = [sentence[idx]]
-                else:
-                    label.append(sentence[idx])
-            else:
-                if label:
-                    predicted_targets.append(label)
-                    label = None
-
-        gold_targets = []
-        label = None
-
-        # Targets
-        for idx, pred in enumerate(gold):
-            if pred > 0:
-                if not label:
-                    label = [sentence[idx]]
-                else:
-                    label.append(sentence[idx])
-            else:
-                if label:
-                    gold_targets.append(label)
-                    label = None
-
-        prediction_analysis[sent_id] = {}
-        prediction_analysis[sent_id]["text"] = [w for w in sentence]
-        prediction_analysis[sent_id]["true_label"] = {}
-        prediction_analysis[sent_id]["true_label"]["target"] = gold_targets
-        prediction_analysis[sent_id]["predicted_label"] = {}
-        prediction_analysis[sent_id]["predicted_label"]["target"] = predicted_targets
-
-        return prediction_analysis
+# def score_f1(predictions_dict) -> Tuple[float, float]:
+#     f1_regular, f1_binary = (.0, .0)
+#
+#     pred = predictions_dict['pred']['flat']['vectorised']
+#     gold = predictions_dict['gold']['flat']['vectorised']
+#     binary_pred = predictions_dict['pred']['flat']['binary']
+#     binary_gold = predictions_dict['gold']['flat']['binary']
+#
+#     return f1_regular, f1_binary
 
 
 def proportional_analysis(flat_gold_labels, flat_predictions):
@@ -172,30 +144,14 @@ def proportional_analysis(flat_gold_labels, flat_predictions):
     return f1
 
 
-def binary_precision(flat_binary_pred, flat_binary_gold):
-    pred = flat_binary_pred
-    gold = flat_binary_gold
-
-    true_positives = sum(map(np.logical_and, pred, gold))
-    false_posiives = sum(map(np.logical_and, np.logical_not(gold), pred))
-
-    return true_positives / (true_positives + false_posiives + 10 ** -10)
 
 
-def binary_recall(flat_binary_pred, flat_binary_gold):
-    pred = flat_binary_pred
-    gold = flat_binary_gold
-
-    true_positives = sum(map(np.logical_and, pred, gold))
-    false_negatives = sum(map(np.logical_and, np.logical_not(pred), gold))
-
-    return true_positives / (true_positives + false_negatives + (10 ** -10))
 
 
-def binary_f1(anns, anntype="source"):
-    prec = binary_precision(anns, anntype)
-    rec = binary_recall(anns, anntype)
-    return 2 * ((prec * rec) / (prec + rec))
+
+
+
+
 
 def binary_analysis(prediction_analysis):
     print(f'Binary results:\n{"#" * 80}\n')
