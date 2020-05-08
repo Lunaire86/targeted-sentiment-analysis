@@ -4,6 +4,7 @@
 
 # Project specific stuff
 #excluded/
+norec/
 saga/
 saga_config.json
 babil/sandbox/old_PathTo.py
