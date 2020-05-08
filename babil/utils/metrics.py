@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf-8
+
 from collections import namedtuple
 from dataclasses import dataclass, field, InitVar
 from typing import Any, Dict, NamedTuple
