@@ -189,13 +189,6 @@ def binary_recall(flat_binary_pred, flat_binary_gold):
     true_positives = sum(map(np.logical_and, pred, gold))
     false_negatives = sum(map(np.logical_and, np.logical_not(pred), gold))
 
-    for _, ann in annotations.items():
-        target = ann["target"][annotation_type]
-        prediction = ann["prediction"][annotation_type]
-
-        true_positives += binary_true_pos(target, prediction)
-        false_negatives += binary_false_neg(target, prediction)
-
     return true_positives / (true_positives + false_negatives + (10 ** -10))
 
 
