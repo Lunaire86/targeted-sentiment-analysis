@@ -39,6 +39,7 @@ class PathTracker:
     raw_data: str
     interim_data: str
     processed_data: str
+    shared_embeddings: str
     embeddings: str
     figures: str
     models: str
@@ -82,7 +83,7 @@ class ArgParser:
             '--batch_size', '-bs',
             action='store',
             type=int,
-            default=50,
+            default=100,
             help='Size of mini-batches'
         )
         parser.add_argument(
@@ -118,11 +119,12 @@ class ArgParser:
             help='Trainable embeddings?'
         )
         parser.add_argument(
-            '--embedding_id', '-eid',
+            '--embeddings',
             action='store',
-            type=int,
-            default=94,
-            help='Word embedding ID number (as per http://vectors.nlpl.eu)'
+            type=str,
+            default='cc.no.300.bin',
+            help='Word embeddings basename (path to folder '
+                 'must be set in the json config file first)'
         )
         parser.add_argument(
             '--embeddings_dir', '-edir',
