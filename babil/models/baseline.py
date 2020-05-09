@@ -43,7 +43,7 @@ METRICS = [
 class Baseline:
     # required args
     args: Namespace
-    path_to: PathTracker
+    unique_dir: str
     weights: np.ndarray
 
     # default value args
@@ -52,7 +52,6 @@ class Baseline:
 
     # fields set in __post_init__()
     recurrent_dropout: float = field(init=False)
-    checkpoint_path: str = field(init=False)
     callbacks: List[Callback] = field(init=False, default_factory=list)
 
     # class output
@@ -62,8 +61,8 @@ class Baseline:
     def __post_init__(self):
         self.recurrent_dropout = self.args.dropout
 
-        self.checkpoint_path = join(
-            self.path_to.models, 'baseline_checkpoint.h5'
+        checkpoint_path = join(
+            self.unique_dir, 'model_checkpoint.h5'
         )
 
         self.callbacks = [
@@ -80,7 +79,7 @@ class Baseline:
                 verbose=2
             ),
             ModelCheckpoint(
-                filepath=self.checkpoint_path,
+                filepath=checkpoint_path,
                 monitor='val_loss',
                 save_format='h5',
                 save_best_only=True,
@@ -135,7 +134,7 @@ class Baseline:
         self.model = Model(
             inputs=[text_input],
             outputs=[predicted_labels],
-            name='baseline'
+            name=self.__name__
         )
         optim = Adam(learning_rate=self.args.learning_rate)  # alternatively, try Adamax
         loss = CategoricalCrossentropy()
@@ -162,23 +161,23 @@ class Baseline:
             callbacks=self.callbacks
         )
 
-    def save(self, path: str, name: str = 'baseline.h5') -> None:
+    def save(self) -> None:
         """Save model."""
-        self.model.save(join(path, name))
+        self.model.save(join(self.unique_dir, 'model.h5'))
         # Save training metrics too
         metrics = np.array([
             self.results.history[_] for _ in self.results.history.keys()
         ])
-        np.save(join(path, f'{name}_metrics.npy'), metrics)
+        np.save(join(self.unique_dir, 'metrics.npy'), metrics)
 
     @staticmethod
     def load(path: str, checkpoint: bool = True) -> Tuple[Model, History]:
         """Loads the pre-trained baseline model.
         Returns both model and its results."""
         if checkpoint:
-            model = keras.models.load_model(join(path, 'baseline_checkpoint.h5'))
+            model = keras.models.load_model(join(path, 'model_checkpoint.h5'))
         else:
-            model = keras.models.load_model(join(path, 'baseline.h5'))
+            model = keras.models.load_model(join(path, 'model.h5'))
 
         return model
 
