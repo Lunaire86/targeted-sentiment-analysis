@@ -3,7 +3,7 @@
 
 from collections import namedtuple
 from dataclasses import dataclass, field, InitVar
-from typing import Any, Dict, NamedTuple
+from typing import Dict, NamedTuple
 
 import numpy as np
 from sklearn.metrics import precision_score, recall_score, f1_score, multilabel_confusion_matrix, classification_report
@@ -103,7 +103,6 @@ class Metrics:
 
 
 def binary_precision(y_true, y_pred):
-
     true_positives = sum(map(np.logical_and, y_pred, y_true))
     false_posiives = sum(map(np.logical_and, np.logical_not(y_true), y_pred))
 
@@ -114,7 +113,6 @@ def binary_precision(y_true, y_pred):
 
 
 def binary_recall(y_true, y_pred) -> float:
-
     true_positives = sum(map(np.logical_and, y_pred, y_true))
     false_negatives = sum(map(np.logical_and, np.logical_not(y_pred), y_true))
 
@@ -131,7 +129,6 @@ def binary_f1(y_true, y_pred) -> float:
 
 
 def binary_scores(y_true, y_pred):
-
     Binary = namedtuple(
         'Binary', 'precision recall f1'
     )
@@ -146,7 +143,6 @@ def binary_scores(y_true, y_pred):
 
 
 def proportional_scores(y_true, y_pred, labels):
-
     Proportional = namedtuple(
         'Proportional', 'precision recall f1'
     )
@@ -232,5 +228,3 @@ if __name__ == '__main__':
         in gold
         for _ in tokens
     ])
-
-
