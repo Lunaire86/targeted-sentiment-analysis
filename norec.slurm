@@ -6,15 +6,16 @@
 # Time limit for the job. Lower limit means higher job priority.
 #SBATCH --time=02:00:00
 
-# Number of compute nodes for the job. Default is 1.
-#SBATCH --nodes=2
+# Since we are using Gensim's LineSentence features, meaning
+# excellent support for multi-threading, we will
+# make use of several cores for this job.
 
-# Per core memory limit. 3000MB by default (?)
-#SBATCH --mem-per-cpu=12G
+# Per core memory limit.
+#SBATCH --mem-per-cpu=8G
+#SBATCH --ntasks=8 --cpus-per-task=10 --ntasks-per-node=4
 
-# Number of cores on the compute node. Request two by default,
-# or between 6 and 10 for larger computations.
-#SBATCH --ntasks-per-node=2
+# Info about the multi
+# https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
 
 source ${HOME}/.bashrc
 

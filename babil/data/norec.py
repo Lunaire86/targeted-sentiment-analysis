@@ -5,7 +5,8 @@ import time
 from argparse import ArgumentParser
 from os import path
 from os.path import join
-from typing import List
+
+from multiprocessing import cpu_count
 
 import numpy as np
 from gensim.models.callbacks import CallbackAny2Vec
@@ -29,7 +30,7 @@ class EpochLogger(CallbackAny2Vec):
     def on_epoch_end(self, model):
         t = time.strftime('%H-%M-%S')
         print(f'{t} : Epoch #{self.epoch} end\n'
-              f'Duration -> {time.time() - self.timer} seconds\n')
+              f'Duration -> {round(time.time() - self.timer, 2)} seconds\n')
         self.epoch += 1
         self.timer = 0
 
@@ -83,6 +84,7 @@ if __name__ == '__main__':
     model_name = f'norec.{partition}.{args.dim}.bin'
 
     epoch_logger = EpochLogger()
+    num_cores = cpu_count()
 
     if args.saga:
         print('\n\n', args)
@@ -115,7 +117,7 @@ if __name__ == '__main__':
 
             # Use these many worker threads to train the model
             # (=faster training with multicore machines).
-            workers=4,
+            workers=int(num_cores / 2),
 
             # sort the vocabulary by descending frequency
             # before assigning word indices
@@ -229,7 +231,7 @@ if __name__ == '__main__':
 
     if args.saga:
         target_dir = args.save
-        model_path = join(target_dir, f'norec.{name}.{args.dim}.bin')
+        model_path = join(target_dir, model_name)
         mode = 'wb' if path.exists(model_path) else 'xb'
-        with open(model_path, 'xb') as f:
+        with open(model_path, mode) as f:
             model.save(f)
