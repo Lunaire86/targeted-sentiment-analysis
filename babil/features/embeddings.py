@@ -10,8 +10,24 @@ from typing import List, Dict, Union, Optional, Tuple
 import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
+from gensim.models.fasttext import FastText
 
 from utils.config import PathTracker, set_global_seed
+
+
+def train_embeddings(model: FastText, sentences: List[List[str]]):
+    # Update the embeddings with sentences from our training set
+    model.build_vocab(
+        sentences,
+        update=True
+    )
+    model.train(
+        sentences,
+        total_examples=len(sentences),
+        epochs=model.epochs
+    )
+
+
 
 
 def load_gensim_model(filepath: str) -> KeyedVectors:

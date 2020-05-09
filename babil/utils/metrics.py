@@ -87,7 +87,7 @@ class Metrics:
 
         # Generate a multiclass confusion matrix
         # without including the majority class
-        self.cfm_excluding_majority = multilabel_confusion_matrix(
+        self.cfm_including_majority = multilabel_confusion_matrix(
             y_true=self.gold['flat']['readable'],
             y_pred=self.pred['flat']['readable'],
             labels=str_labels
@@ -95,12 +95,11 @@ class Metrics:
 
         # Generate a classification report
         # without including the majority class
-        self.report_excluding_majority = classification_report(
+        self.report_including_majority = classification_report(
             y_true=self.gold['flat']['readable'],
             y_pred=self.pred['flat']['readable'],
             labels=str_labels
         )
-
 
 
 def binary_precision(y_true, y_pred):

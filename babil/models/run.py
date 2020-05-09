@@ -15,9 +15,9 @@ from gensim.models.fasttext import FastTextKeyedVectors, load_facebook_model, lo
 from tensorflow.keras.models import Model
 
 from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
+from features.embeddings import train_embeddings
 from models.baseline import Baseline
 from utils.config import PathTracker, ArgParser
-from utils.helpers import plot_results, y_dict
 from utils.metrics import Metrics
 
 
@@ -40,8 +40,9 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
     embeddings: Union[FastText, FastTextKeyedVectors]
 
     if args.train_embeddings:
-        embeddings = load_facebook_model(path_to_embeddings, encoding='latin1')
+        ft_model = load_facebook_model(path_to_embeddings, encoding='latin1')
         basename = f'trained_{basename}'
+        embeddings = train_embeddings(ft_model)
     else:
         embeddings = load_facebook_vectors(path_to_embeddings, encoding='latin1')
 
@@ -111,7 +112,6 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
         bilstm.train(X_train, y_train, X_dev, y_dev)
         bilstm.save(path_to.models, name='baseline.300.h5')
 
-
         # Get predictions
         predictions = bilstm.predict(X_dev)
 
@@ -131,7 +131,7 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
     print(f'\n\nBinary scores:\n{metrics.binary}')
     print(f'\n\nProportional scores scores:\n{metrics.regular}\n\n')
     print(f'\n\nClassification report for the dev set (excluding "O"):\n{metrics.report}')
-    print(f'\n\nClassification report for the dev set (including "O"):\n{metrics.report}')
+    print(f'\n\nClassification report for the dev set (including "O"):\n{metrics.report_including_majority}')
 
     # plot_results(bilstm.results, path_to.figures, 'baseline', 'accuracy')
     # plot_results(bilstm.results, path_to.figures, 'baseline', 'binary_accuracy')
@@ -217,7 +217,6 @@ if __name__ == '__main__':
     smol_mod = join(path_to.models, 'baseline_checkpoint.20.h5')
     model: Model = keras.models.load_model(smol_mod)
     predictions = model.predict(X_dev, batch_size=1)
-
 
     # plot_results(model.results, path_to.figures, 'smol', 'accuracy')
     # plot_results(model.results, path_to.figures, 'smol', 'binary_accuracy')
