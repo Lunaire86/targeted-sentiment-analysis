@@ -3,6 +3,7 @@
 
 import os
 import pickle
+import time
 from argparse import Namespace
 from os.path import join
 from typing import Union
@@ -22,27 +23,42 @@ from utils.metrics import Metrics
 
 
 def baseline(parsed_args: Namespace, paths: PathTracker):
+    # Parse and store command line arguments
+    args = parsed_args
+
+    # Read path configuration from json
+    path_to = paths
+
+    # Create a unique directory where all saved
+    # files from this runtime will be stored
+    t = time.strftime('%Y-%m-%d_%H-%M-%S')  # this will act as an identifier
+    UNIQUE_DIR = join(path_to.models, f'{t}_{args.run}')
+    os.mkdir(UNIQUE_DIR)
+
+    print(f'Any files saved during this run will be stored to '
+          f'a directory unique to this run: {UNIQUE_DIR}\n')
+
     # Based on checking the length of all sentences in train and dev,
     # setting max sequence length to 50 seems reasonable
     SEQUENCE_LENGTH = 50
-
-    args = parsed_args
-    path_to = paths
 
     print('Reading data from conll...')
     train = Dataset(path_to.train)
     dev = Dataset(path_to.dev)
     test = Dataset(path_to.test)  # Keep ur hands off, bro
 
-    print('Loading pre-trained embeddings...')
-    basename = 'cc.no.300.bin'
-    path_to_embeddings = join(path_to.models, basename)
+    basename = args.embeddings
+    print(f'Loading pre-trained embeddings ({basename})...')
+    path_to_embeddings = join(path_to.embeddings, basename)
     embeddings: Union[FastText, FastTextKeyedVectors]
 
     if args.train_embeddings:
-        ft_model = load_facebook_model(path_to_embeddings, encoding='latin1')
-        basename = f'trained_{basename}'
-        embeddings = train_embeddings(ft_model)
+        raise NotImplementedError('This feature is not available at the moment.')
+
+        # TODO : implement properly
+        # ft_model = load_facebook_model(path_to_embeddings, encoding='latin1')
+        # basename = f'trained_{basename}'
+        # embeddings = train_embeddings(ft_model)
     else:
         embeddings = load_facebook_vectors(path_to_embeddings, encoding='latin1')
 
@@ -54,38 +70,37 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
     unk_vec = tf.random.uniform(shape=[1, embedding_dim], minval=0.05, maxval=0.95, seed=69686)
     weights = np.r_[pad_vec.numpy(), unk_vec.numpy(), embeddings.vectors]
 
+    print('Building the vocabulary...')
     # Update the vocab with tokens for padding and unknown words
     embeddings_vocab = embeddings.index2entity
     word2idx = {'<PAD>': 0, '<UNK>': 1}
     word2idx.update(
         {word: idx + 2 for (idx, word) in enumerate(embeddings_vocab)}
     )
-    idx2word = {idx: word for (word, idx) in word2idx.items()}
+    # idx2word = {idx: word for (word, idx) in word2idx.items()}
 
     # Save the word-to-index dict
-    w2i_path = join(path_to.models, f'{basename}_word2idx.pickle')
+    w2i_path = join(UNIQUE_DIR, 'word2idx.pickle')
     mode = 'wb' if os.path.exists(w2i_path) else 'xb'
     with open(w2i_path, mode) as f:
         pickle.dump(word2idx, f)
 
     # And also save the weights using numpy
-    npy_path = join(path_to.models, f'{basename}_weights.npy')
-    mode = 'wb' if os.path.exists(npy_path) else 'xb'
-    with open(npy_path, mode) as f:
-        np.save(f, weights)
+    # npy_path = join(UNIQUE_DIR, 'weights.npy')
+    # mode = 'wb' if os.path.exists(npy_path) else 'xb'
+    # with open(npy_path, mode) as f:
+    np.save(join(UNIQUE_DIR, 'embedding_weights.npy'), weights)
 
-    print('Building the vocabulary...')
-    # Words
+    # Tokenise words
     word_tokeniser = WordTokeniser()
     word_tokeniser.fit_on_texts(train.X)
-    word_tokeniser.save(path_to.interim_data)
+    word_tokeniser.save(UNIQUE_DIR)
     print(f'Found {len(word_tokeniser.word_index)} different words.')
 
-    # Labels
+    # Tokenise labels
     label_tokeniser = LabelTokeniser()
     label_tokeniser.fit_on_texts(train.y)
-    label_tokeniser.save(path_to.interim_data)
-    num_classes = len(label_tokeniser.word_index)
+    label_tokeniser.save(UNIQUE_DIR)  # do we actually need to save this too?
     print(f'Found {len(label_tokeniser.word_index)} different labels.')
 
     # Vectorise words
@@ -100,26 +115,27 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
     print(f'Dev data shapes: X={X_dev.shape}, y={y_dev.shape}')  # X=(1151, 30) y=(1151, 30, 6)
 
     if args.load:
+        raise NotImplementedError('This feature is not available at the moment.')
+
+        # TODO : refactor this to make it work after the UNIQUE_DIR implementation
         # Load checkpoint model from previous run
-        bilstm = Baseline.load(path_to.models)
+        # bilstm = Baseline.load(path_to.models)
         # bilstm = keras.models.load_model(join(path_to.models, 'baseline_checkpoint.20.h5'))
-        predictions = bilstm.predict(X_dev)
+        # predictions = bilstm.predict(X_dev)
 
     else:
         # Build and train the baseline model
-        bilstm = Baseline(args, path_to, weights)
+        bilstm = Baseline(args, UNIQUE_DIR, weights)
         bilstm.build()
         bilstm.train(X_train, y_train, X_dev, y_dev)
-        bilstm.save(path_to.models, name='baseline.300.h5')
+        bilstm.save()
 
         # Get predictions
         predictions = bilstm.predict(X_dev)
 
         # Save predictions and y_dev so we can load for evaluation if needs be
-        pred_path = join(path_to.data, f'{basename}_pred.npy')
-        gold_path = join(path_to.data, f'{basename}_gold.npy')
-        np.save(pred_path, predictions)
-        np.save(gold_path, y_dev)
+        np.save(join(UNIQUE_DIR, 'y_pred.npy'), predictions)
+        np.save(join(UNIQUE_DIR, 'y_gold.npy'), y_dev)
 
     metrics = Metrics(X_dev, y_dev, predictions, label_tokeniser.index_word)
 
