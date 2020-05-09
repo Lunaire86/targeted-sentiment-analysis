@@ -1,0 +1,53 @@
+---
+title: 'Parsing CoNNL-U files'
+author: 'Maria Singstad Paulsen'
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output:
+    pdf_document:
+        fig_width: 5
+        fig_height: 3.5
+        df_print: kable
+        highlight: tango
+        # default tango pygments kate monochrome espresso zenburn haddock breezedark
+    fontsize: 12pt
+    # highlight: atelier forest light
+    # highlight: solar
+
+    # LaTeX stuff
+    # documentclass: scrartcl
+    header-includes:
+        - \usepackage{amsmath}
+        - \usepackage{xcolor}
+        - \usepackage{bm}
+
+        # The following lines lets us use the Chancery font with its size altered
+        - \DeclareFontFamily{OT1}{pzc}{}
+        - \DeclareFontShape{OT1}{pzc}{m}{it}{<->s*[1.2] pzcmi7t}{}
+        - \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+        # - \usepackage[dvipsnames]{xcolor}
+---
+
+```{r, echo = F, warning = F, message = F}
+# Load packages
+library(ggplot2)
+library(reticulate)
+library(udpipe)
+library(tidyverse) # general utility & workflow functions
+library(tidytext) # tidy implimentation of NLP methods
+```
+Load the training data.
+```{r, echo = F, warning = F, message = F}
+train <- udpipe_read_conllu('/home/fero/Desktop/in5550_exam/data/raw/000298.conllu')
+```
+
+Sift out the tokenised sentences only.
+```{r, echo = F, warning = F, message = F}
+sentences <- data.frame()
+```
+
+Load the training data.
+```{r, echo = F, warning = F, message = F}
+train <- read.delim('/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll', header = F, quote = "", col.names = c('token', 'tag'))
+summary(train); cat('\n')
+str(train)
+```
