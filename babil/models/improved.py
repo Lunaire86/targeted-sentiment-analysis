@@ -1,39 +1,22 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-import os
-import pickle
-import time
 from argparse import Namespace
 from dataclasses import dataclass, field
-from logging import Logger
 from os.path import join
-from typing import Union, List, Tuple
+from typing import List, Tuple
 
-import matplotlib as mpl
-from matplotlib import pyplot as plt
 import numpy as np
 # import seaborn as sns
-import tensorflow as tf
 import tensorflow.keras as keras
-from sklearn.metrics import classification_report
-
 from tensorflow.keras.callbacks import History, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
-from tensorflow.keras.layers import Bidirectional, Dense, Dropout, Embedding
-from tensorflow.keras.layers import Input, LSTM, LSTMCell, Masking
+from tensorflow.keras.layers import Bidirectional, Dense, Embedding
+from tensorflow.keras.layers import Input, LSTM
 from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.metrics import BinaryAccuracy, CategoricalAccuracy, Metric, Precision, Recall
+from tensorflow.keras.metrics import BinaryAccuracy, CategoricalAccuracy, Precision, Recall
 from tensorflow.keras.metrics import TruePositives, TrueNegatives, FalsePositives, FalseNegatives
-
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
-
-from gensim.models import FastText
-from gensim.models.fasttext import FastTextKeyedVectors, load_facebook_model, load_facebook_vectors
-
-from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
-from sandbox.keras_metrics import BinaryTruePositives, BinaryTrueNegatives
-from sandbox.keras_metrics import BinaryFalsePositives, BinaryFalseNegatives
 
 from utils.config import PathTracker
 
@@ -46,10 +29,10 @@ METRICS = [
     FalseNegatives(name='fn'),
     Precision(name='precision'),
     Recall(name='recall'),
-    BinaryTruePositives(name='btp'),
-    BinaryTrueNegatives(name='btn'),
-    BinaryFalsePositives(name='bfp'),
-    BinaryFalseNegatives(name='bfn')
+    # BinaryTruePositives(name='btp'),
+    # BinaryTrueNegatives(name='btn'),
+    # BinaryFalsePositives(name='bfp'),
+    # BinaryFalseNegatives(name='bfn')
 ]
 
 
