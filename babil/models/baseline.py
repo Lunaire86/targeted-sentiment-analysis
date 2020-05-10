@@ -19,9 +19,6 @@ from tensorflow.keras.metrics import TruePositives, TrueNegatives, FalsePositive
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-from sandbox.keras_metrics import BinaryFalsePositives, BinaryFalseNegatives
-from sandbox.keras_metrics import BinaryTruePositives, BinaryTrueNegatives
-from utils.config import PathTracker
 
 METRICS = [
     CategoricalAccuracy(name='accuracy'),
