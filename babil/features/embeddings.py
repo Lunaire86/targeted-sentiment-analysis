@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 # coding: utf-8
-
 import os
 import pickle
 import zipfile
 from dataclasses import dataclass, field
 from typing import List, Dict, Union, Optional, Tuple
 
+from fasttext.FastText import load_model as load_using_fasttext
 import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
 from gensim.models.fasttext import FastText, load_facebook_vectors, load_facebook_model, _load_fasttext_format
 from gensim.models.keyedvectors import FastTextKeyedVectors
+from gensim.test.utils import datapath
+from gensim.utils import _pickle
 
 from utils.config import PathTracker, set_global_seed
 
@@ -30,17 +32,21 @@ def train_embeddings(model: FastText, sentences: List[List[str]]):
 
 
 def load_fasttext_embeddings(path: str, name: str, encoding: str = 'latin1') -> FastTextKeyedVectors:
-    model: FastText
+    model: Union[FastText, FastTextKeyedVectors]
 
     if name.startswith('cc'):
         # Case: Native fastText embeddings.
         return load_facebook_vectors(path, encoding=encoding)
-    model = FastText.load(path)
 
-    # if name.startswith('norec'):
-    # else:
-    #     with zipfile.ZipFile(path, "r") as archive:
-    #         model = FastText.load(archive.open("model.bin"))
+    try:
+        print(f'\nTrying to load {name} using FastText.load({path})...')
+        model = FastText.load(path)
+    except _pickle.UnpicklingError as e:
+        print(f'Error caught: {e}')
+        with zipfile.ZipFile(path, "r") as archive:
+            archive_path = datapath(archive.open("model.bin"))
+            model = load_facebook_vectors(archive_path, encoding=encoding)
+            # model = load_using_fasttext(archive.open("model.bin"))
 
     # Pre-compute L2-normalized vectors.
     model.init_sims(replace=True)
