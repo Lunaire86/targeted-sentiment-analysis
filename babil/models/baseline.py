@@ -131,7 +131,7 @@ class Baseline:
         self.model = Model(
             inputs=[text_input],
             outputs=[predicted_labels],
-            name=self.__name__
+            name='baseline'
         )
         optim = Adam(learning_rate=self.args.learning_rate)  # alternatively, try Adamax
         loss = CategoricalCrossentropy()

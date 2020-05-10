@@ -7,12 +7,11 @@ import time
 from argparse import Namespace
 from os.path import join
 
-from fasttext.FastText import load_model as load_using_fasttext
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
 from gensim.models import FastText
-from gensim.utils import _pickle
+
 from gensim.models.fasttext import FastTextKeyedVectors
 from tensorflow.keras.models import Model
 
@@ -64,12 +63,8 @@ def baseline(parsed_args: Namespace, paths: PathTracker):
     if args.train_embeddings:
         raise NotImplementedError('This feature is not available at the moment.')
 
-    # Load pre-trained word embeddings using Gensim's KeyedVectors format
-    try:
-        embeddings = load_fasttext_embeddings(path_to_embeddings, args.embeddings)
-    except _pickle.UnpicklingError as e:
-        print(f'Error caught: {e}')
-        embeddings = load_using_fasttext(path_to_embeddings)
+    # Load pre-trained word embeddings
+    embeddings = load_fasttext_embeddings(path_to_embeddings, args.embeddings)
 
     # Get the weights and add vectors representing
     # indices 0 and 1 by concatenating along the first
