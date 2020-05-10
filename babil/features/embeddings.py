@@ -10,7 +10,8 @@ from typing import List, Dict, Union, Optional, Tuple
 import numpy as np
 import tensorflow as tf
 from gensim.models import KeyedVectors
-from gensim.models.fasttext import FastText
+from gensim.models.fasttext import FastText, load_facebook_vectors, load_facebook_model, _load_fasttext_format
+from gensim.models.keyedvectors import FastTextKeyedVectors
 
 from utils.config import PathTracker, set_global_seed
 
@@ -28,6 +29,22 @@ def train_embeddings(model: FastText, sentences: List[List[str]]):
     )
 
 
+def load_fasttext_embeddings(path: str, name: str, encoding: str = 'latin1') -> FastTextKeyedVectors:
+    model: FastText
+
+    if name.startswith('cc'):
+        # Case: Native fastText embeddings.
+        return load_facebook_vectors(path, encoding=encoding)
+    model = FastText.load(path)
+
+    # if name.startswith('norec'):
+    # else:
+    #     with zipfile.ZipFile(path, "r") as archive:
+    #         model = FastText.load(archive.open("model.bin"))
+
+    # Pre-compute L2-normalized vectors.
+    model.init_sims(replace=True)
+    return model.wv
 
 
 def load_gensim_model(filepath: str) -> KeyedVectors:
@@ -35,21 +52,19 @@ def load_gensim_model(filepath: str) -> KeyedVectors:
     model: KeyedVectors
     is_binary = False if filepath.endswith(('.txt.gz', '.txt', '.vec.gz', '.vec')) else True
     kwargs: Dict = {'binary': is_binary,
+                    'encoding': 'latin1',
                     'unicode_errors': 'replace'}
 
     # ZIP archive from the NLPL vector repository:
     if filepath.endswith('.zip'):
         with zipfile.ZipFile(filepath, "r") as archive:
-            print(f'utils/embeddings.py -> load_gensim_model() -> zip opened')
             model = KeyedVectors.load_word2vec_format(
                 archive.open("model.bin"), **kwargs)
     else:
-        print(f'utils/embeddings.py -> load_gensim_model() -> else clause (which should not have triggered)')
         model = KeyedVectors.load_word2vec_format(
             filepath, **kwargs)
 
     # Unit-normalizing the vectors (if they aren't already)
-    print(f'utils/embeddings.py -> load_gensim_model() -> model loaded, now unit-normalising')
     model.init_sims(replace=True)
     return model
 
@@ -83,7 +98,7 @@ class WordEmbeddings:
     def __post_init__(self) -> None:
         print(f'utils/embeddings.py -> WordEmbeddings.--post_init__() -> {self.filepath}')
         set_global_seed()
-        self._model = load_gensim_model(self.filepath)
+        self._model = load_with_gensim(self.filepath)
         print(f'utils/embeddings.py -> WordEmbeddings.--post_init__() -> model loaded')
         self._vocab = self._model.index2entity
         self._vectors = self._model.vectors
