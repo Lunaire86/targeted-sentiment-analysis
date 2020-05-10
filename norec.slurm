@@ -6,13 +6,15 @@
 # Time limit for the job. Lower limit means higher job priority.
 #SBATCH --time=02:00:00
 
-# Since we are using Gensim's LineSentence features, meaning
-# excellent support for multi-threading, we will
-# make use of several cores for this job.
+# Number of compute nodes for the job. Default is 1.
+#SBATCH --ntasks=2
 
 # Per core memory limit.
-#SBATCH --mem-per-cpu=8G
-#SBATCH --ntasks=8 --cpus-per-task=10 --ntasks-per-node=4
+#SBATCH --mem-per-cpu=16G
+
+# Number of cores on the compute node.
+#SBATCH --ntasks-per-node=2
+
 
 # Info about the multi
 # https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
@@ -44,4 +46,4 @@ ulimit -a module list
 # pass on the remaining command-line options
 python babil/data/norec.py "${@}"
 
-# sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/models --dim 50 --epochs 5
+# sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --dim 300 --epochs 20
