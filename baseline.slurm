@@ -4,10 +4,10 @@
 #SBATCH --account=nn9447k
 
 # Time limit for the job. Lower limit means higher job priority.
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 
 # Number of compute nodes for the job. Default is 1.
-#SBATCH --nodes=2
+#SBATCH --nodes=1
 
 # Per core memory limit. 3000MB by default (?)
 #SBATCH --mem-per-cpu=12G
