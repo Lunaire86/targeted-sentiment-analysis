@@ -10,6 +10,22 @@ from typing import Optional, Any
 import tensorflow as tf
 
 
+EMBEDDING_INFO = '''
+    All embeddings used are fastText embeddings.
+    
+    cc.no.300.bin: Continuous Bag-of-Words: Common Crawl and Wikipedia, dim=300
+    norec.100.cbow.bin: Continuous Bag-of-Words: NoReC, dim=100
+    norec.300.cbow.bin: Continuous Bag-of-Words: NoReC, dim=300
+    norec.100.sg.bin: Skipgram: NoReC, dim=100
+    norec.300.sg.bin: Skipgram: NoReC, dim=300
+    114.zip: Continuous Bag-of-Words: NNC, dim=100
+    122.zip: Skipgram: NNC, dim=100
+    112.zip: Skipgram: NNC + NoWaC, dim=100
+    120.zip: Skipgram: NNC + NoWaC, dim=100
+    110.zip: Continuous Bag-of-Words: NNC + NoWaC + NBDigital, dim=100
+'''
+
+
 def _set_global_seed(seed_dir):
     global_seed: int
     seed_file = os.path.join(seed_dir, 'SEED')
@@ -107,13 +123,6 @@ class ArgParser:
             help='Early stopping is implemented, so this may be an arbitrary large number'
         )
         parser.add_argument(
-            '--embedding_dim', '-edim',
-            action='store',
-            type=int,
-            default=100,
-            help='Dimensionality of the word embeddings'
-        )
-        parser.add_argument(
             '--train_embeddings', '-tre',
             action='store_true',
             help='Trainable embeddings?'
@@ -122,16 +131,27 @@ class ArgParser:
             '--embeddings',
             action='store',
             type=str,
-            default='cc.no.300.bin',
-            help='Word embeddings basename (path to folder '
-                 'must be set in the json config file first)'
+            choices=[
+                'cc.no.300.bin',
+                'norec.100.cbow.bin',
+                'norec.300.cbow.bin',
+                'norec.100.sg.bin',
+                'norec.300.sg.bin',
+                '114.zip',
+                '122.zip',
+                '112.zip',
+                '120.zip',
+                '110.zip'
+            ],
+            default='110.zip',
+            help=EMBEDDING_INFO
         )
         parser.add_argument(
-            '--embeddings_dir', '-edir',
+            '--embeddings_dim', '-edim',
             action='store',
-            type=str,
-            default='/cluster/shared/nlpl/vectors/latest',
-            help='Path to word embeddings root directory'
+            type=int,
+            default=100,
+            help='Dimensionality of the pre-trained word embeddings'
         )
         parser.add_argument(
             '--saga',
