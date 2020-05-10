@@ -6,10 +6,9 @@ import pickle
 import re
 from dataclasses import dataclass, field
 from typing import List, Dict, Union, Optional
-from typing import Tuple, Set
+from typing import Tuple
 
 import numpy as np
-import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import Tokenizer
 from tensorflow.keras.utils import to_categorical
@@ -104,8 +103,7 @@ def vectorise(texts: List[List[str]],
             # Replace unknown tokens with 1
             encoded = [
                 word2idx[word]
-                if word in word2idx and word2idx[word] < 20000
-                # if word in word2idx  -- TODO : change back
+                if word in word2idx
                 else 1
                 for word in sentence
             ]
