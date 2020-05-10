@@ -1,5 +1,23 @@
 ## Daily Plan
 
+###
+Training embeddings
+- CBOW 300  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow --dim 300
+`  
+- CBOW 100  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow
+`
+- SG 300  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --sg --dim 300`  
+- SB 100  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --sg`  
+ 
+Training models
+- nnc_nowac_nbd_100_cbow  
+    `sbatch baseline.slurm --embeddings nnc_nowac_nbd_100_cbow --embeddings_dim 100 --run baseline --saga
+`
+
 ### Tuesday 05.05.20
 - Rebase master onto experimental (I think?)
 - Write stuff about baseline model evaluation results.
