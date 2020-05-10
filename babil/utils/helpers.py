@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
+import os
 import time
 from os.path import join
 from typing import Dict, Any, List, Union
@@ -8,6 +9,20 @@ from typing import Dict, Any, List, Union
 import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.callbacks import History
+
+
+def create_dir(path: str, name: str) -> str:
+
+    # Create a directory identifier
+    t = time.strftime('%Y-%m-%d_%H-%M-%S')
+    new_dir = join(path, f'{t}_{name}')
+    try:
+        os.mkdir(new_dir)
+    except FileExistsError:
+        # Recursive call to generate a new ID
+        time.sleep(2)
+        return create_dir(path, name)
+    return new_dir
 
 
 def flatten(padded_sequences, decode=False) -> np.ndarray:
