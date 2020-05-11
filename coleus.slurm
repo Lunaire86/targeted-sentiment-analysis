@@ -4,13 +4,13 @@
 #SBATCH --account=nn9447k
 
 # Time limit for the job. Lower limit means higher job priority.
-#SBATCH --time=02:00:00
+#SBATCH --time=00:20:00
 
 # Number of compute nodes for the job. Default is 1.
 #SBATCH --ntasks=2
 
 # Per core memory limit.
-#SBATCH --mem-per-cpu=16G
+#SBATCH --mem-per-cpu=10G
 
 # Number of cores on the compute node.
 #SBATCH --ntasks-per-node=2
@@ -44,4 +44,4 @@ echo "submission directory: ${SUBMITDIR}"
 ulimit -a module list
 
 # pass on the remaining command-line options
-python coleus-1.0/coleus "${@}"
+python babil/coleus "${@}"
