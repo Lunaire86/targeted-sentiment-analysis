@@ -3,11 +3,9 @@
 
 from argparse import Namespace
 from dataclasses import dataclass, field
-from os.path import join
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
-# import seaborn as sns
 import tensorflow.keras as keras
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.callbacks import History, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
@@ -19,7 +17,6 @@ from tensorflow.keras.metrics import TruePositives, TrueNegatives, FalsePositive
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-
 METRICS = [
     CategoricalAccuracy(name='accuracy'),
     BinaryAccuracy(name='binary_accuracy'),
@@ -28,11 +25,7 @@ METRICS = [
     FalsePositives(name='fp'),
     FalseNegatives(name='fn'),
     Precision(name='precision'),
-    Recall(name='recall'),
-    # BinaryTruePositives(name='btp'),
-    # BinaryTrueNegatives(name='btn'),
-    # BinaryFalsePositives(name='bfp'),
-    # BinaryFalseNegatives(name='bfn')
+    Recall(name='recall')
 ]
 
 
@@ -40,7 +33,7 @@ METRICS = [
 class Baseline:
     # required args
     args: Namespace
-    unique_dir: str
+    partial_path: str
     weights: np.ndarray
 
     # default value args
@@ -48,7 +41,7 @@ class Baseline:
     sequence_length: int = 50
 
     # fields set in __post_init__()
-    recurrent_dropout: float = field(init=False)
+    path: str = field(init=False)
     callbacks: List[Callback] = field(init=False, default_factory=list)
 
     # class output
@@ -56,11 +49,6 @@ class Baseline:
     results: History = field(init=False, default=None)
 
     def __post_init__(self):
-        self.recurrent_dropout = self.args.dropout
-
-        checkpoint_path = join(
-            self.unique_dir, 'model_checkpoint.h5'
-        )
 
         self.callbacks = [
             EarlyStopping(
@@ -76,7 +64,7 @@ class Baseline:
                 verbose=2
             ),
             ModelCheckpoint(
-                filepath=checkpoint_path,
+                filepath=f'{self.partial_path}_model_checkpoint.h5',
                 monitor='val_loss',
                 save_format='h5',
                 save_best_only=True,
@@ -116,7 +104,7 @@ class Baseline:
             LSTM(
                 units=self.args.hidden_dim,
                 dropout=self.args.dropout,
-                recurrent_dropout=self.recurrent_dropout,
+                recurrent_dropout=self.args.recurrent_dropout,
                 return_sequences=True
             ),
             name='BiLSTM'
@@ -160,21 +148,34 @@ class Baseline:
 
     def save(self) -> None:
         """Save model."""
-        self.model.save(join(self.unique_dir, 'model.h5'))
+        self.model.save(f'{self.partial_path}_model.h5')
         # Save training metrics too
         metrics = np.array([
             self.results.history[_] for _ in self.results.history.keys()
         ])
-        np.save(join(self.unique_dir, 'metrics.npy'), metrics)
+        np.save(f'{self.partial_path}_metrics.npy', metrics)
 
     @staticmethod
-    def load(path: str, checkpoint: bool = True) -> Tuple[Model, History]:
-        """Loads the pre-trained baseline model.
-        Returns both model and its results."""
-        if checkpoint:
-            model = keras.models.load_model(join(path, 'model_checkpoint.h5'))
+    def load(path: str, checkpoint: bool = True, absolute_path: bool = False) -> Model:
+        """Loads a pre-trained model. If path is not an absolute path
+        pointing to a model saved in h5 format, the most recent model,
+        is loaded, which by default is a checkpoint model.
+
+        Arguments:
+            path: Either an absolute path to a file, or a partial path
+            that becomes absolute when appending a basename, which in this
+            case is either `model_checkpoint.h5` or `model.h5`.
+            checkpoint: Whether to load a checkpoint model or not.
+            absolute_path: Toggle if path is an absolute path to a model.
+        Returns:
+            A :class:`~tensorflow.keras.models.Model` object.
+
+        """
+        name = 'model_checkpoint.h5' if checkpoint else 'model.h5'
+        if absolute_path:
+            model = keras.models.load_model(path)
         else:
-            model = keras.models.load_model(join(path, 'model.h5'))
+            model = keras.models.load_model(f'{path}_{name}')
 
         return model
 
