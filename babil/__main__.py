@@ -24,7 +24,6 @@ if __name__ == '__main__':
                         style='{',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info(f'\n{"~" * 40} NEW JOB {"~" * 40}\n')
 
     # Ensure reproducibility
     set_global_seed()
@@ -38,7 +37,10 @@ if __name__ == '__main__':
     s = '~' * len(args.run)
     if args.run == 'baseline':
         print(f'{s}\nBASELINE\n{s}')
+        logger.info(f'\n{"~" * 40} NEW JOB - BASELINE {"~" * 40}\n')
         run.baseline(args, paths, logger)
 
     elif args.run == 'improved':
-        run.improved(args, paths)
+        print(f'{s}\nIMPROVED\n{s}')
+        logger.info(f'\n{"~" * 40} NEW JOB - IMPROVED {"~" * 40}\n')
+        run.improved(args, paths, logger)

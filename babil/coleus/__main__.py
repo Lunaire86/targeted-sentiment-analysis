@@ -9,8 +9,8 @@ from os import path
 from time import time
 from zipfile import ZipFile
 
-from src.model import Model
-from src.utils import get_filenames, ArgParser
+from model import Model
+from utils import get_filenames, ArgParser
 
 
 class NoParsingFilter(logging.Filter):

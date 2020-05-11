@@ -20,4 +20,5 @@ EMBEDDINGS = {
     '92.zip': 'Gensim Continuous Bag-of-Words: NNC, NoWaC, dim=100',
     '94.zip': 'Gensim Continuous Bag-of-Words: NNC, dim=100',
     '96.zip': 'Gensim Continuous Bag-of-Words: NoWaC, dim=100',
+    'ndt.cbow.100.bin': 'fastText Continuous Bag-of-Words: NDT, dim=100'
 }
