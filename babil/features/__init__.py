@@ -13,6 +13,7 @@ EMBEDDINGS = {
     '112.zip': 'fastText Skipgram: NNC + NoWaC, dim=100',
     '120.zip': 'fastText Skipgram: NNC + NoWaC, dim=100',
     '110.zip': 'fastText Continuous Bag-of-Words: NNC + NoWaC + NBDigital, dim=100',
+    '129.zip': 'fastText Skipgram: NNC + NoWaC, dim=600',
     '86.zip': 'Global Vectors: NNC, dim=100',
     '88.zip': 'Global Vectors: NoWaC, dim=100',
     '90.zip': 'Global Vectors: NBDigital, dim=100',
