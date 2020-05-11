@@ -84,7 +84,8 @@ def vectorise(texts: List[List[str]],
               tokeniser: Optional[Union[LabelTokeniser, WordTokeniser]] = None,
               word2idx: Optional[Dict[str, int]] = None,
               categorical: Optional[bool] = False,
-              maxlen: int = 50) -> np.ndarray:
+              maxlen: int = 50,
+              ) -> np.ndarray:
     vectorised: List[List[int]] = []
     sequences: List[List[int]] = []
     padded: np.ndarray
@@ -109,8 +110,8 @@ def vectorise(texts: List[List[str]],
     padded = pad_sequences(
         sequences or vectorised,
         maxlen=maxlen,
-        padding='post',
-        truncating='post'
+        padding='pre',
+        truncating='pre'
     )
 
     # Case categorical: vectorising labels -> one-hot encode
