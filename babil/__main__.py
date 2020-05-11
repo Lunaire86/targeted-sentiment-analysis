@@ -18,12 +18,13 @@ if __name__ == '__main__':
     mpl.use('Agg')
 
     # Initialise a logger
-    logging.basicConfig(filename='logger.log', filemode='a',
+    logging.basicConfig(filename='babil.log', filemode='a',
                         format='{asctime} : {levelname} : {message}',
                         datefmt='%Y-%m-%d %X',
                         style='{',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
+    logger.info(f'NEW JOB\n{"~" * 80}')
 
     # Ensure reproducibility
     set_global_seed()
@@ -33,12 +34,11 @@ if __name__ == '__main__':
         PathTracker.from_json('saga_config.json') if args.saga
         else PathTracker.from_json('local_config.json')
     )
-    logger.info(f'Project paths set:\n{paths}')
 
     s = '~' * len(args.run)
     if args.run == 'baseline':
         print(f'{s}\nBASELINE\n{s}')
-        run.baseline(args, paths)
+        run.baseline(args, paths, logger)
 
     elif args.run == 'improved':
         run.improved(args, paths)
