@@ -24,7 +24,7 @@ if __name__ == '__main__':
                         style='{',
                         level=logging.INFO)
     logger = logging.getLogger(__name__)
-    logger.info(f'NEW JOB\n{"~" * 80}')
+    logger.info(f'\n{"~" * 40} NEW JOB {"~" * 40}\n')
 
     # Ensure reproducibility
     set_global_seed()
