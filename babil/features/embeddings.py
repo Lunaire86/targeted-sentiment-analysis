@@ -44,7 +44,8 @@ def load_gensim_model(filepath: str, ext: str = 'bin') -> KeyedVectors:
     is_binary = False if filepath.endswith(('.txt.gz', '.txt', '.vec.gz', '.vec')) else True
     kwargs: Dict = {'binary': is_binary,
                     'encoding': 'latin1',
-                    'unicode_errors': 'replace'}
+                    'unicode_errors': 'replace',
+                    }
 
     # ZIP archive from the NLPL vector repository:
     if filepath.endswith('.zip'):
