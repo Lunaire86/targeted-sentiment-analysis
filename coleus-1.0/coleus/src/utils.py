@@ -2,7 +2,6 @@
 # coding: utf-8
 
 import logging
-import os
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass, field
 from logging import Logger
@@ -23,24 +22,6 @@ def get_filenames(args: Namespace) -> Tuple[str, str]:
     if args.zip:
         model_name = log_name
     return model_name, f'{log_name}.log'
-
-
-def get_logger(log_file: str) -> Logger:
-    logging.basicConfig(
-        filename=log_file,
-        filemode='a',
-        format='{asctime} : {levelname} : {message}',
-        datefmt='%Y-%m-%d %X',
-        style='{',
-        level=logging.INFO
-    )
-    return logging.getLogger(__name__)
-
-
-def log_msg(msg: str, logger: Optional[Logger] = None):
-    if not logger:
-        return
-    logger.log(msg)
 
 
 @dataclass
@@ -115,11 +96,6 @@ class ArgParser:
             '--sg',
             action='store_true',
             help='Train using the fastText Skipgram algorithm.'
-        )
-        parser.add_argument(
-            '--quiet',
-            action='store_false',
-            help='Toggle to turn off logging (not recommended).'
         )
         parser.add_argument(
             '--zip',
