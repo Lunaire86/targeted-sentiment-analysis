@@ -16,7 +16,7 @@ from gensim.models.keyedvectors import Word2VecKeyedVectors
 
 from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
 from features import EMBEDDINGS
-from features.embeddings import load_fasttext_embeddings, load_gensim_model, load_embeddings
+from features.embeddings import load_gensim_model, load_embeddings
 from models.baseline import Baseline
 from utils.config import PathTracker
 from utils.helpers import get_identifier, path_prefix
@@ -51,7 +51,7 @@ def baseline(parsed_args: Namespace, paths: PathTracker, logger: Logger):
         if args.embeddings.endswith('.zip')
         else join(path_to.embeddings, args.embeddings)
     )
-    s = f'Loading embeddings: {EMBEDDINGS[args.embeddings]})'
+    s = f'Loading embeddings: {EMBEDDINGS[args.embeddings]}'
     print(s, '\n'); logger.info(s)
 
     # We have to take a few extra steps if we want to continue training.
@@ -65,11 +65,12 @@ def baseline(parsed_args: Namespace, paths: PathTracker, logger: Logger):
         logger.error(e)
         embeddings = load_gensim_model(path_to_embeddings, ext='txt')
     finally:
-        logger.error(f'Embeddings loaded: {embeddings}')
+        logger.info(f'Embeddings loaded: {embeddings}')
+
     # Get the weights and add vectors representing
     # indices 0 and 1 by concatenating along the first
     # axis (i.e. 'inserting' two rows at the front)
-    dim = args.embeddings_dim
+    dim = int(EMBEDDINGS[args.embeddings].rsplit('=', 1)[1])
     pad_vec = tf.random.uniform(shape=[1, dim], minval=0.05, maxval=0.95, seed=69686)
     unk_vec = tf.random.uniform(shape=[1, dim], minval=0.05, maxval=0.95, seed=69686)
     weights = np.r_[pad_vec.numpy(), unk_vec.numpy(), embeddings.vectors]
@@ -144,16 +145,17 @@ def baseline(parsed_args: Namespace, paths: PathTracker, logger: Logger):
     np.save(yp_path, predictions)
     np.save(yg_path, y_dev)
     logger.info(f'File saved: {yp_path}')
-    logger.info(f'File saved: {yg_path}')
+    logger.info(f'File saved: {yg_path}\n')
 
     metrics = Metrics(X_dev, y_dev, predictions, label_tokeniser.index_word)
 
     metrics_output = [
-        f'Binary scores:\n{metrics.binary}',
-        f'Proportional scores scores:\n{metrics.regular}\n\n',
-        f'Classification report for the dev set (excluding "O"):\n{metrics.report}',
-        f'Classification report for the dev set (including "O"):\n{metrics.report_including_majority}'
+        f'Binary scores: \t{metrics.binary}',
+        f'Proportional scores scores:\t{metrics.regular}\n',
+        f'Classification report for the dev set (excluding "O"):\t{metrics.report}',
+        f'Classification report for the dev set (including "O"):\t{metrics.report_including_majority}'
     ]
+    logger.log(f'{_ID_} ~~~ REPORT ~~~')
     print(*metrics_output, sep='\n')
     for m in metrics_output:
         logger.info(m)
