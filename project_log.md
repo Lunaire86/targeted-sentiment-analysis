@@ -1,18 +1,19 @@
 ## Daily Plan
 
-###
-Training embeddings
-- CBOW 300  
-    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow --dim 300
-`  
-- CBOW 100  
-    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow
-`
+### Training embeddings - NoReC
+- CBoW 300  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow --dim 300`  
+- CBoW 100  
+    `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --cbow`
 - SG 300  
     `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --sg --dim 300`  
 - SB 100  
     `sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --sg`  
- 
+
+### Training embeddings - NDT - blog
+- CBoW 100  
+    `sbatch coleus.slurm --source ../ndt/blog_ndt/ --target embeddings/ --dim 100 --epochs 10 --cbow -D --zip`
+
 ### Training models
 - norec.300.cbow.bin -> 2020-05-10_02-55-11  
     - Binary(precision=0.7627, recall=0.0354, f1=0.0677)  
