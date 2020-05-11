@@ -8,22 +8,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Any
 
 import tensorflow as tf
-
-
-EMBEDDING_INFO = '''
-    All embeddings used are fastText embeddings.
-    
-    cc.no.300.bin: Continuous Bag-of-Words: Common Crawl and Wikipedia, dim=300
-    norec.100.cbow.bin: Continuous Bag-of-Words: NoReC, dim=100
-    norec.300.cbow.bin: Continuous Bag-of-Words: NoReC, dim=300
-    norec.100.sg.bin: Skipgram: NoReC, dim=100
-    norec.300.sg.bin: Skipgram: NoReC, dim=300
-    114.zip: Continuous Bag-of-Words: NNC, dim=100
-    122.zip: Skipgram: NNC, dim=100
-    112.zip: Skipgram: NNC + NoWaC, dim=100
-    120.zip: Skipgram: NNC + NoWaC, dim=100
-    110.zip: Continuous Bag-of-Words: NNC + NoWaC + NBDigital, dim=100
-'''
+from features import EMBEDDINGS
 
 
 def _set_global_seed(seed_dir):
@@ -81,13 +66,7 @@ class ArgParser:
 
     def _add_args(self):
         parser = self.parser
-        parser.add_argument(
-            '--num_layers', '-nl',
-            action='store',
-            type=int,
-            default=1,
-            help='Number of layer(s)'
-        )
+
         parser.add_argument(
             '--hidden_dim', '-hd',
             action='store',
@@ -103,7 +82,20 @@ class ArgParser:
             help='Size of mini-batches'
         )
         parser.add_argument(
+            '--epochs', '-e',
+            action='store',
+            type=int,
+            default=50,
+            help='Early stopping is implemented, so this may be an arbitrary large number'
+        )
+        parser.add_argument(
             '--dropout', '-dr',
+            action='store',
+            type=float,
+            default=0.01
+        )
+        parser.add_argument(
+            '--recurrent_dropout', '-rdr',
             action='store',
             type=float,
             default=0.01
@@ -116,35 +108,12 @@ class ArgParser:
             help='Learning rate'
         )
         parser.add_argument(
-            '--epochs', '-e',
-            action='store',
-            type=int,
-            default=50,
-            help='Early stopping is implemented, so this may be an arbitrary large number'
-        )
-        parser.add_argument(
-            '--train_embeddings', '-tre',
-            action='store_true',
-            help='Trainable embeddings?'
-        )
-        parser.add_argument(
             '--embeddings',
             action='store',
             type=str,
-            choices=[
-                'cc.no.300.bin',
-                'norec.100.cbow.bin',
-                'norec.300.cbow.bin',
-                'norec.100.sg.bin',
-                'norec.300.sg.bin',
-                '114.zip',
-                '122.zip',
-                '112.zip',
-                '120.zip',
-                '110.zip'
-            ],
+            choices=EMBEDDINGS,
             default='110.zip',
-            help=EMBEDDING_INFO
+            help=str(EMBEDDINGS)
         )
         parser.add_argument(
             '--embeddings_dim', '-edim',
@@ -152,6 +121,11 @@ class ArgParser:
             type=int,
             default=100,
             help='Dimensionality of the pre-trained word embeddings'
+        )
+        parser.add_argument(
+            '--train_embeddings', '-tre',
+            action='store_true',
+            help='Trainable embeddings?'
         )
         parser.add_argument(
             '--saga',
