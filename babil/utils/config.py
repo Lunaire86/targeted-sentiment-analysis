@@ -136,7 +136,7 @@ class ArgParser:
             '--run',
             action='store',
             type=str,
-            choices=['baseline'],
+            choices=['baseline', 'improved'],
             default='baseline'
         )
         parser.add_argument(
