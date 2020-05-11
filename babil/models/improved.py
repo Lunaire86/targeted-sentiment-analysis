@@ -3,12 +3,11 @@
 
 from argparse import Namespace
 from dataclasses import dataclass, field
-from os.path import join
-from typing import List, Tuple
+from typing import List
 
 import numpy as np
-# import seaborn as sns
 import tensorflow.keras as keras
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.callbacks import History, EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.layers import Bidirectional, Dense, Embedding
 from tensorflow.keras.layers import Input, LSTM
@@ -18,8 +17,6 @@ from tensorflow.keras.metrics import TruePositives, TrueNegatives, FalsePositive
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
-from utils.config import PathTracker
-
 METRICS = [
     CategoricalAccuracy(name='accuracy'),
     BinaryAccuracy(name='binary_accuracy'),
@@ -28,19 +25,15 @@ METRICS = [
     FalsePositives(name='fp'),
     FalseNegatives(name='fn'),
     Precision(name='precision'),
-    Recall(name='recall'),
-    # BinaryTruePositives(name='btp'),
-    # BinaryTrueNegatives(name='btn'),
-    # BinaryFalsePositives(name='bfp'),
-    # BinaryFalseNegatives(name='bfn')
+    Recall(name='recall')
 ]
 
 
 @dataclass
-class Baseline:
+class Improved:
     # required args
     args: Namespace
-    path_to: PathTracker
+    partial_path: str
     weights: np.ndarray
 
     # default value args
@@ -48,34 +41,30 @@ class Baseline:
     sequence_length: int = 50
 
     # fields set in __post_init__()
-    recurrent_dropout: float = field(init=False)
-    checkpoint_path: str = field(init=False)
-    callbacks: List[keras.callbacks] = field(init=False, default_factory=list)
+    path: str = field(init=False)
+    callbacks: List[Callback] = field(init=False, default_factory=list)
 
     # class output
     model: Model = field(init=False, default=None)
     results: History = field(init=False, default=None)
 
     def __post_init__(self):
-        self.recurrent_dropout = self.args.dropout
-
-        self.checkpoint_path = join(
-            self.path_to.models, 'baseline_checkpoint.h5'
-        )
 
         self.callbacks = [
             EarlyStopping(
                 monitor='val_loss',
-                patience=2,
+                min_delta=0.01,
+                patience=3,
                 verbose=2
             ),
             EarlyStopping(
                 monitor='val_accuracy',
-                patience=2,
+                min_delta=0.01,
+                patience=3,
                 verbose=2
             ),
             ModelCheckpoint(
-                filepath=self.checkpoint_path,
+                filepath=f'{self.partial_path}_model_checkpoint.h5',
                 monitor='val_loss',
                 save_format='h5',
                 save_best_only=True,
@@ -89,7 +78,7 @@ class Baseline:
             )
         ]
 
-    def build(self):
+    def build(self) -> None:
 
         """Build a model using the Keras functional API."""
 
@@ -104,7 +93,7 @@ class Baseline:
             weights=[self.weights],
             mask_zero=True,
             trainable=self.args.train_embeddings,
-            name='fastText'
+            name='embeddings'
         )(text_input)
 
         # Fraction of the units to drop for
@@ -115,10 +104,11 @@ class Baseline:
             LSTM(
                 units=self.args.hidden_dim,
                 dropout=self.args.dropout,
-                recurrent_dropout=self.recurrent_dropout,
+                recurrent_dropout=self.args.recurrent_dropout,
                 return_sequences=True
             ),
-            name='BiLSTM'
+            merge_mode='concat',
+            name='BiLSTM-concat'
         )(embedded)
 
         predicted_labels = Dense(
@@ -130,15 +120,9 @@ class Baseline:
         self.model = Model(
             inputs=[text_input],
             outputs=[predicted_labels],
-            name='baseline'
+            name='improved'
         )
-
-    def summary(self):
-        return self.model.summary()
-
-    def compile(self):
-        """Compile model."""
-        optim = Adam(learning_rate=self.lr)  # alternatively, try Adamax
+        optim = Adam(learning_rate=self.args.learning_rate)
         loss = CategoricalCrossentropy()
 
         self.model.compile(
@@ -146,8 +130,12 @@ class Baseline:
             loss=loss,
             metrics=METRICS
         )
+        self.model.summary()
 
-    def train(self, X_train, y_train, X_dev, y_dev) -> History:
+    def summary(self):
+        return self.model.summary()
+
+    def train(self, X_train, y_train, X_dev, y_dev, class_weights) -> None:
         """Train model."""
         self.results = self.model.fit(
             X_train, y_train,
@@ -155,30 +143,48 @@ class Baseline:
             epochs=self.args.epochs,
             batch_size=self.args.batch_size,  # samples per gradient
             shuffle=True,
-            callbacks=self.callbacks
+            verbose=2,
+            callbacks=self.callbacks,
+            class_weights=class_weights
         )
-        return self.results
 
-    @staticmethod
-    def save(model, path) -> None:
+    def save(self) -> None:
         """Save model."""
-        model.save(join(path, 'improved.h5'))
+        self.model.save(f'{self.partial_path}_model.h5')
+        # Save training metrics too
+        metrics = np.array([
+            self.results.history[_] for _ in self.results.history.keys()
+        ])
+        np.save(f'{self.partial_path}_metrics.npy', metrics)
 
     @staticmethod
-    def load(path, checkpoint: bool = True) -> Tuple[Model, History]:
-        """Loads the pre-trained baseline model.
-        Returns both model and its results."""
-        if checkpoint:
-            model = keras.models.load_model(join(path, 'improved_checkpoint.h5'))
+    def load(path: str, checkpoint: bool = True, absolute_path: bool = False) -> Model:
+        """Loads a pre-trained model. If path is not an absolute path
+        pointing to a model saved in h5 format, the most recent model,
+        is loaded, which by default is a checkpoint model.
+
+        Arguments:
+            path: Either an absolute path to a file, or a partial path
+            that becomes absolute when appending a basename, which in this
+            case is either `model_checkpoint.h5` or `model.h5`.
+            checkpoint: Whether to load a checkpoint model or not.
+            absolute_path: Toggle if path is an absolute path to a model.
+        Returns:
+            A :class:`~tensorflow.keras.models.Model` object.
+
+        """
+        name = 'model_checkpoint.h5' if checkpoint else 'model.h5'
+        if absolute_path:
+            model = keras.models.load_model(path)
         else:
-            model = keras.models.load_model(join(path, 'improved.h5'))
+            model = keras.models.load_model(f'{path}_{name}')
 
-        return model, model.history
+        return model
 
-    def predict(self):
+    def predict(self, *args, **kwargs):
         """Predict."""
-        pass
+        return self.model.predict(*args, **kwargs)
 
-    def evaluate(self):
+    def evaluate(self, *args, **kwargs):
         """Evaluate."""
-        pass
+        return self.model.evaluate(*args, **kwargs)
