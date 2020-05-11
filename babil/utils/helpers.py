@@ -121,7 +121,7 @@ def y_dict(X: np.ndarray,
     }
 
 
-def plot_results(result: History, folder: str, metric: str, name: str) -> None:
+def plot_results(result: History, folder: str, name: str, metric: str) -> None:
     t = time.strftime('%m%d_%H-%M-%S')
     img_name = f'{t}_{name}_{metric}.png'
     path = join(folder, img_name)
