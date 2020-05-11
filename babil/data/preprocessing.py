@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # coding: utf-8
 
-from os.path import abspath, join
 import pickle
 import re
 from dataclasses import dataclass, field
+from os.path import abspath, join
 from typing import List, Dict, Union, Optional
 from typing import Tuple
 
@@ -20,12 +20,10 @@ class LabelTokeniser(Tokenizer):
         defaults = {'filters': '', 'lower': False}
         defaults.update(kwargs)
         super(LabelTokeniser, self).__init__(**defaults)
-        # self.index_word[0] = '<PAD>'
-        # self.word_index['<PAD>'] = 0
 
-    def save(self, folder: str):
-        basename = f'{self.__class__.__name__}.pickle'
-        with open(join(folder, basename), 'wb') as f:
+    def save(self, partial_path: str):
+        file = f'{partial_path}_{self.__class__.__name__}.pickle'
+        with open(file, 'wb') as f:
             pickle.dump(self, f)
 
     def fit_on_texts(self, nested_lists):
@@ -47,7 +45,6 @@ class WordTokeniser(LabelTokeniser):
 
 @dataclass
 class Dataset:
-
     filepath: str
     X: List[List[str]] = field(init=False)
     y: List[List[str]] = field(init=False)
@@ -88,7 +85,6 @@ def vectorise(texts: List[List[str]],
               word2idx: Optional[Dict[str, int]] = None,
               categorical: Optional[bool] = False,
               maxlen: int = 50) -> np.ndarray:
-
     vectorised: List[List[int]] = []
     sequences: List[List[int]] = []
     padded: np.ndarray
@@ -119,13 +115,3 @@ def vectorise(texts: List[List[str]],
 
     # Case categorical: vectorising labels -> one-hot encode
     return to_categorical(padded) if categorical else padded
-
-
-def masking():
-    '''
-    mask: Binary tensor of shape [batch, timesteps] indicating whether
-    a given timestep should be masked
-    '''
-    # TODO : look into this
-    pass
-
