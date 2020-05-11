@@ -44,6 +44,4 @@ echo "submission directory: ${SUBMITDIR}"
 ulimit -a module list
 
 # pass on the remaining command-line options
-python babil/data/norec.py "${@}"
-
-# sbatch norec.slurm --train /cluster/work/users/marispau/train --save /cluster/work/users/marispau/exam/embeddings --dim 300 --epochs 20
+python coleus-1.0/coleus "${@}"
