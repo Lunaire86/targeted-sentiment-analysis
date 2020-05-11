@@ -14,7 +14,7 @@
 
 # Number of cores on the compute node. Request two by default,
 # or between 6 and 10 for larger computations.
-#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks-per-node=4
 
 source ${HOME}/.bashrc
 
