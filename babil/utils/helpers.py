@@ -4,25 +4,55 @@
 import os
 import time
 from os.path import join
-from typing import Dict, Any, List, Union
+from typing import Dict, Any, Union
 
 import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.callbacks import History
 
 
-def create_dir(path: str, name: str) -> str:
+def path_prefix(path: str, identifier: str) -> str:
+    """Returns a partial path for a given identifier.
 
-    # Create a directory identifier
-    t = time.strftime('%Y-%m-%d_%H-%M-%S')
-    new_dir = join(path, f'{t}_{name}')
-    try:
-        os.mkdir(new_dir)
-    except FileExistsError:
+    Arguments:
+        path: An absolute path to an existing folder
+        identifier: A runtime-unique indentifier
+    Returns:
+        A Partial path that is made complete by adding
+        the name of the file, and its extension.
+    Examples:
+        path = os.path.abspath('some_existing_folder') \n
+        id = get_identifier(path) \n
+        partial_path = path_prefix(path, id) \n
+        full_path = f'{partial_path}_array.npy' \n
+            `full_path == '/abspath/some_existing_folder/id_array.npy'` \n
+    """
+    return join(path, identifier)
+
+
+def get_identifier(path: str) -> str:
+    """Generate an identifier unique to this runtime.
+    The path argument is used to check for existing
+    identifiers, so as to avoid duplicates.
+
+    Arguments:
+        path: An absolute path to an existing folder.
+    Returns:
+        A string of the format date-time-id, where the id
+        is the current process id.
+    Examples:
+        path = os.path.abspath('some_existing_folder') \n
+        id = get_identifier(path) \n
+            `id == '2020-05-10-12-51-08-5432'` \n
+    """
+
+    t = time.strftime('%Y-%m-%d-%H-%M-%S')
+    identifier = f'{t}-{os.getpid()}'
+    if identifier in [_.split('_')[0] for _ in os.listdir(path)]:
         # Recursive call to generate a new ID
         time.sleep(2)
-        return create_dir(path, name)
-    return new_dir
+        return get_identifier(path)
+    return identifier
 
 
 def flatten(padded_sequences, decode=False) -> np.ndarray:
@@ -44,28 +74,20 @@ def flatten(padded_sequences, decode=False) -> np.ndarray:
     return flat_encoded
 
 
-def serialise(y_dict: Dict) -> Dict[Dict, List[Any]]:
-    # TODO : this method is being a complete arse
-    d = dict(y_dict)
-    for k, v in d.items():
-        for entry in v.keys():
-            if isinstance(entry, np.ndarray):
-                d[k][v][entry] = entry.tolist()
-    return d
-
-
-def y_dict(X: np.ndarray, y: np.ndarray,
-           idx2lab: Dict[int, str],
-           num_classes: int = 5) -> Dict[str, Union[Dict[str, Union[np.ndarray, Any]], Dict[str, np.ndarray]]]:
+def y_dict(X: np.ndarray,
+           y: np.ndarray,
+           idx2lab: Dict[int, str]) -> Dict[str, Union[
+    Dict[str, Union[np.ndarray, Any]],
+    Dict[str, np.ndarray]]]:
     # Create an index array that "masks out" padding tokens
     pad_idx_arr = np.where(X.ravel() != 0.0)[0]
+
     # Create index arrays that maps out individual sentences
     sent_idx_arrays = [
         np.arange(len(sent)) for sent
         in [np.where(word != 0.0)[0] for word in X]
     ]
 
-    one_hot_y = flatten(y)
     vectorised_y = flatten(y, decode=True)
     vectorised_X = flatten(X, decode=True)
 
@@ -75,8 +97,6 @@ def y_dict(X: np.ndarray, y: np.ndarray,
     binary = np.where(unpadded != majority_idx, 1, 0)
     readable = np.array([idx2lab[i] for i in unpadded])
 
-    n = num_classes + 1
-    # one_hot_sents = np.empty(shape=(len(X), n), dtype=np.ndarray)
     vec_sents = np.empty(shape=(len(X),), dtype=np.ndarray)
     bin_sents = vec_sents.copy()
     word_sents = vec_sents.copy()
@@ -85,20 +105,15 @@ def y_dict(X: np.ndarray, y: np.ndarray,
         vec_sents[i] = unpadded[ixs]
         word_sents[i] = readable[ixs]
         bin_sents[i] = binary[ixs]
-        # Multiply sentence length by num_classes + 1
-        # to get the correct shape and dim
-        # one_hot_sents[i] = one_hot_y[np.arange(ixs.size * n)]
         vectorised_X = vectorised_X[len(ixs):]
 
     return {
         'flat': {
-            # 'one-hot': one_hot_y,
             'vectorised': unpadded,
             'binary': binary,
             'readable': readable
         },
         'sequential': {
-            # 'one-hot': one_hot_sents,
             'vectorised': vec_sents,
             'binary': binary,
             'readable': word_sents
