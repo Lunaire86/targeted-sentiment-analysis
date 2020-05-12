@@ -3,14 +3,13 @@
 
 import logging
 import os
-from argparse import Namespace
-from logging import Logger
-from os import path
 from time import time
 from zipfile import ZipFile
 
-from model import Model
-from utils import get_filenames, ArgParser
+from coleus.config import ArgParser
+from coleus.helpers import get_filenames
+from coleus.model import FastTextModel
+from utils.config import PathTracker
 
 
 class NoParsingFilter(logging.Filter):
@@ -24,24 +23,28 @@ class NoThreadsFilter(logging.Filter):
 
 
 if __name__ == '__main__':
-    # Type declarations
-    parser: ArgParser
-    args: Namespace
-    logger: Logger
-    model: Model
-
-    # Store command line arguments.
-    parser = ArgParser()
+    # Store command line arguments
+    parser = ArgParser()  # class defined in coleus/config.py
     args = parser.args
+    print(args, sep='\n')
+
+    # Easy access to various file locations
+    path_to = (
+        PathTracker.from_json('saga_config.json') if args.saga
+        else PathTracker.from_json('local_config.json')
+    )
 
     # Get filenames for model and logger.
     model_file, log_file = get_filenames(args)
-    model_path = path.join(args.target, model_file)
+    model_path = (
+        os.path.join(args.target, model_file)
+        if args.target else path_to.embeddings
+    )
 
     # Create a logger and print the path to the log file
     logger = logging.getLogger()
     handler = logging.FileHandler(
-        filename=log_file,
+        filename=os.path.join(path_to.logs, log_file),
     )
     formatter = logging.Formatter(
         fmt='{asctime} : {levelname} : {message}',
@@ -58,7 +61,7 @@ if __name__ == '__main__':
     print(f'Log file: {os.path.abspath(log_file)}')
 
     # Initialise (build) the model.
-    model = Model.init(args)
+    model = FastTextModel.init(args)
 
     # If the model should take in additional data, do
     # model.build_vocab(more_training_data, update=True)
@@ -73,14 +76,13 @@ if __name__ == '__main__':
     logger.info(model.__str__())
     print(model)
 
-    mode = 'wb' if path.exists(model_path) else 'xb'
+    mode = 'wb' if os.path.exists(model_path) else 'xb'
     if args.zip:
         with ZipFile(model_path, mode[0]) as archive:
             archive.write(filename=model.save(), arcname='model.bin')
             archive.write(filename=model.wv, arcname='model.vec')
             logger.info(f'Saved to archive {model_path} -> model.bin, model.vec')
     else:
-        with open(model_path, mode) as f:
+        with open(os.path.join(model_path, model_file), mode) as f:
             model.save(f)
         logger.info(f'Saved to file -> {model_path}')
-

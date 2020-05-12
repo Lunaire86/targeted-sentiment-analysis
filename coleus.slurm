@@ -7,15 +7,14 @@
 #SBATCH --time=04:00:00
 
 # Number of compute nodes for the job. Default is 1.
-#SBATCH --ntasks=2
+#SBATCH --ntasks=1
 
 # Per core memory limit.
-#SBATCH --mem-per-cpu=8G
+#SBATCH --mem-per-cpu=12G
 
 # Number of cores on the compute node.
-#SBATCH --ntasks-per-node=2
+#SBATCH --ntasks-per-node=4
 
-#SBATCH --cpus-per-task=8
 
 # Info about the multi
 # https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
@@ -45,4 +44,4 @@ echo "submission directory: ${SUBMITDIR}"
 ulimit -a module list
 
 # pass on the remaining command-line options
-python babil/coleus "${@}"
+python babil/coleus.py "${@}"
