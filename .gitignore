@@ -10,10 +10,12 @@ models/*h5
 precode
 
 # Project specific files
+batch.sh
 babil.slurm
 coleus.slurm
 local_config.json
 project_log.md
+saga_config.json
 LICENSE
 
 # Exclude data from source control by default
