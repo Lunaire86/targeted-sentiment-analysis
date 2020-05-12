@@ -88,16 +88,31 @@ cat('Train\n'); summary(train$target); cat('\n')
 cat('Dev\n'); summary(dev$target)
 ```
 ```{r}
-smol_train <- filter(train$tag != 'O')  # train$tag
+train_minority <- remove(train$tag, "O")
+
+cat('Train\n'); summary(train_minority); cat('\n')
+
 ```
 
 ```{r}
-barplot(table(train$polarity, train$target))
+barplot(table(train$polarity, train$target), horiz = T)
 
 ```
 
 ```{r}
 barplot(table(dev$polarity, dev$target))
+```
+```{r, echo = T, warning = F, message = F, fig.align = 'center', fig.width = 8, fig.height 6, fig.cap = "Tag distribution, train" }
+minority <- train$
+```
+
+```{r, echo = T, warning = F, message = F, fig.align = 'center', fig.width = 8, fig.height 6, fig.cap = "Tag distribution, train" }
+ggplot(train, aes(x = tag)) +
+  geom_bar() +
+  ggtitle("Distribution of tags in the training dataset") +
+  xlab("Tags") + 
+  ylab("Frequency")
+  
 ```
 
 ```{r}
@@ -107,8 +122,29 @@ ggplot(train, aes(x = polarity, y = target, color = tag)) +
 ```
 
 ```{r}
-train_conll <- system.file(package = 'udpipe', '/home/fero/Desktop/nlp/in5550_exam/data/raw/train.conll')
+df = read.delim('/home/fero/Desktop/in5550_exam/report/data/embeddings.tsv')
+summary(df); cat('\n')
+str(df)
 
+```
+```{r}
+df$vocab_size <- factor(df$vocab_size)
+df$baseline <- factor(df$baseline, levels = c(1, 0), labels = c("True", "False"))
+df$dropout <- factor(df$dropout)
+df$recurrent_dropout <- factor(df$recurrent_dropout)
+df$job <- factor(df$job)
+df$dim <- factor(df$dim)
+df$names <- factor(df$names)
+df$algorithm <- factor(df$algorithm)
+summary(df)
+```
+
+```{r, echo = T, warning = F, message = F, fig.align = 'center', fig.width = 8, fig.height 6, fig.cap = "Tag distribution, train" }
+ggplot(df, aes(x = binary_precision, y = binary_recall)) +
+  gG(aes(names)) +
+  ggtitle("Binary F1 Scores") +
+  xlab("Word Embeddings") + 
+  ylab("Binary F1 Score")
 ```
 
 ```{r}
