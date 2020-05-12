@@ -4,7 +4,7 @@
 #SBATCH --account=nn9447k
 
 # Time limit for the job. Lower limit means higher job priority.
-#SBATCH --time=01:00:00
+#SBATCH --time=03:00:00
 
 # Number of compute nodes for the job. Default is 1.
 #SBATCH --nodes=1

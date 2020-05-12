@@ -4,17 +4,18 @@
 #SBATCH --account=nn9447k
 
 # Time limit for the job. Lower limit means higher job priority.
-#SBATCH --time=00:20:00
+#SBATCH --time=04:00:00
 
 # Number of compute nodes for the job. Default is 1.
 #SBATCH --ntasks=2
 
 # Per core memory limit.
-#SBATCH --mem-per-cpu=10G
+#SBATCH --mem-per-cpu=8G
 
 # Number of cores on the compute node.
 #SBATCH --ntasks-per-node=2
 
+#SBATCH --cpus-per-task=8
 
 # Info about the multi
 # https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
