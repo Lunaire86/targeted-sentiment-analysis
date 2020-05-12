@@ -1,26 +1,25 @@
 ###########################################################
-# Experimental notebooks (keep these for now)
+# Experimental notebooks
 # notebooks/develop/
 
-# Project specific stuff
-#excluded/
-norec/
-saga/
-saga_config.json
-babil/sandbox/old_PathTo.py
-#project_log.md
+# Project specific folder
+embeddings/*bin
+embeddings/*txt
+embeddings/*vec
+models/*h5
+precode
+
+# Project specific files
+babil.slurm
+coleus.slurm
+local_config.json
+project_log.md
+LICENSE
 
 # Exclude data from source control by default
 # data/  -- not right now
 
-# Unversioned files, auto-added -> check later
-LICENSE
-Makefile
-#docs/
-models/embeddings/
-#precode/targeted_sa.pdf
-#references/
-tox.ini
+# Unversioned files
 ###########################################################
 
 # Byte-compiled / optimized / DLL files

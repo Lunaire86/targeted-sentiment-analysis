@@ -1,0 +1,15 @@
+{
+  "project_root": "/absolute/path/to/project/root",
+  "data": "/absolute/path/to/project/root/data",
+  "raw_data": "/absolute/path/to/project/root/data/raw",
+  "interim_data": "/absolute/path/to/project/root/data/interim",
+  "processed_data": "/absolute/path/to/project/root/data/processed",
+  "shared_embeddings": "/absolute/shared/nlpl/data/vectors/latest",
+  "embeddings": "/absolute/path/to/project/root/embeddings",
+  "figures": "/absolute/path/to/project/root/figures",
+  "models": "/absolute/path/to/project/root/models",
+  "logs": "/absolute/path/to/project/root/logs",
+  "train": "/absolute/path/to/project/root/data/raw/train.conll",
+  "dev": "/absolute/path/to/project/root/data/raw/dev.conll",
+  "test": "/absolute/path/to/project/root/data/raw/test.conll"
+}

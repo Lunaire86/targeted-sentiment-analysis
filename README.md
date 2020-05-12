@@ -71,47 +71,69 @@ Project Organisation
 ------------
 
 
-    ├── LICENSE            <- Not yet added, because exam project.. 
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
+    ├── LICENSE              <- Not added yet. Reason: exam 
+    ├── README.md            <- The top-level README for developers using this project.
+    │
+    ├── babil                <- Source code for use in this project.
+    │   │
+    │   ├── __init__.py      <- Makes babil a Python module. Babil approves of this.
+    │   ├── __main__.py      <- Makes babil callable. Hello!
+    │   │
+    │   ├── coleus           <- Word embeddings model trainer.
+    │   │   ├── config.py    <- Argument parsing and configurations for coleus.
+    │   │   ├── helpers.py   <- Helper methods for coleus.
+    │   │   └── model.py     <- The class containing the model. 
+    │   │
+    │   ├── data             <- Scripts to download or generate data.
+    │   │   └── preprocessing.py
+    │   │
+    │   ├── features         <- Scripts to turn raw data into features for modeling.
+    │   │   └── embeddings.py
+    │   │
+    │   ├── models           <- Scripts to train models and then use trained models 
+    │   │   │                   to make predictions.
+    │   │   ├── baseline.py  < 
+    │   │   ├── fasttext.py
+    │   │   ├── improved.py
+    │   │   └── run.py
+    │   │
+    │   └──  utils            <- Scripts containing helper functions 
+    │       └── config.py     <- Argument parsing and configurations for babil.
+    │       ├── helpers.py    <- Helper methods for coleus.
+    │       └── metrics.py    <- Model metrics class.
     ├── data
-    │   ├── processed      <- The final, canonical data sets for modeling, as well as intermediate  
-    │   │                     data that has been transformed.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── interim          <- Intermediate data that has been transformed.
+    │   ├── processed        <- The final, canonical data sets for modeling.                
+    │   └── raw              <- The original, immutable data dump.
     │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
+    ├── embeddings           <- Smaller embeddings for running tests locally.
     │
-    ├── notebooks          <- Jupyter notebooks.
+    ├── figures              <- Anything related to data visualisation.
     │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+    ├── logs                 <- Log files.
     │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
+    ├── misc                 <- If it fits, it sits... Or something along those lines.
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    ├── environment.yml    <- The environment file for reproducing the analysis enviroment using Conda.             
+    ├── models               <- Trained and serialized models, model predictions, or model summaries
     │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   ├── utils          <- Scripts containing helper functions 
-    │   │    └── visualize.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │        └── visualize.py
-    └── SEED.txt           <- Much seed. Very strong. Wow.
+    ├── notebooks            <- Jupyter notebooks.
+    │
+    ├── references           <- Data dictionaries, manuals, and all other explanatory materials.
+    │
+    ├── reports              <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │   └── figures          <- Generated graphics and figures to be used in reporting.
+    │
+    ├── environment.yml      <- The environment file for reproducing the analysis enviroment using Conda.             
+    │
+    ├── requirements.txt     <- The requirements file for reproducing the analysis environment, e.g.
+    │                           generated with `pip freeze > requirements.txt`.
+    │
+    ├── path_config.json     <- Keeps track of the various paths used to load or save projects.
+    │
+    ├── conllu_parser.sh     <- Script for parsing CoNNL-U files, in batch, to one sentence per line.
+    │
+    ├── setup.py             <- makes project pip installable (pip install -e .) so src can be imported.
+    │        
+    └── SEED.txt             <- Much seed. Very strong. Wow.
 
 --------

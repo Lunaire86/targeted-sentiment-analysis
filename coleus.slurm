@@ -15,8 +15,7 @@
 # Number of cores on the compute node.
 #SBATCH --ntasks-per-node=4
 
-
-# Info about the multi
+# Info about the support for multiprocessing:
 # https://github.com/RaRe-Technologies/gensim/blob/develop/docs/notebooks/Any2Vec_Filebased.ipynb
 
 source ${HOME}/.bashrc
