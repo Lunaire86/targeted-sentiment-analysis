@@ -44,6 +44,7 @@ class PathTracker:
     embeddings: str
     figures: str
     models: str
+    logs: str
     train: str
     dev: str
     test: str
