@@ -22,7 +22,7 @@ def train_embeddings(model: FastText, sentences: List[List[str]]):
     )
 
 
-def load_embeddings(path: str, name: str):
+def load(path: str, name: str):
     if name.startswith('cc'):
         # Case: Native fastText embeddings.
         return load_facebook_vectors(path, encoding='latin1')
