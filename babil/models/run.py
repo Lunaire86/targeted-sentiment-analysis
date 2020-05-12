@@ -287,15 +287,16 @@ def improved(parsed_args: Namespace, paths: PathTracker, logger: Logger):
     s = f'Dev data shapes: X={X_dev.shape}, y={y_dev.shape}'
     print(s), logger.info(s)  # X=(1151, 30) y=(1151, 30, 6)
 
-    y_ints = flatten(y_train, decode=True)
-    class_weights = compute_class_weight('balanced', np.unique(y_ints), y_ints)
+    # y_ints = flatten(y_train, decode=True)
+    # y_keys = np.unique(y_ints)
+    # class_weights = dict(zip(y_keys, compute_class_weight('balanced', y_keys, y_ints)))
 
     # Build and train the improved model
     bilstm = Improved(args, partial_path, weights)
     bilstm.build()
     logger.info('Training the model...')
     t = time()
-    bilstm.train(X_train, y_train, X_dev, y_dev, class_weights)
+    bilstm.train(X_train, y_train, X_dev, y_dev)
     logger.info(f'Training finished after ~{int((time() - t) / 60)} minutes.')
     # The model gets saved automatically since early stopping is implemented
 
