@@ -54,7 +54,7 @@ class Model(FastText):
             'sorted_vocab': 1,
 
             # Target size (in words) for batches of examples passed to worker threads.
-            'batch_words': 500
+            'batch_words': 3000
         }
         model = Model(**init_kwargs)
         model.build_vocab(PathLineSentences(args.source))
