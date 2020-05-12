@@ -20,6 +20,8 @@ class LabelTokeniser(Tokenizer):
         defaults = {'filters': '', 'lower': False}
         defaults.update(kwargs)
         super(LabelTokeniser, self).__init__(**defaults)
+        self.index_word[0] = '<PAD>'
+        self.word_index['<PAD>'] = 0
 
     def save(self, partial_path: str):
         file = f'{partial_path}_{self.__class__.__name__}.pickle'
