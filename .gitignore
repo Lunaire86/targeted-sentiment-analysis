@@ -16,6 +16,7 @@ coleus.slurm
 local_config.json
 project_log.md
 saga_config.json
+reports/report.tex
 LICENSE
 
 # Exclude data from source control by default
