@@ -30,7 +30,7 @@ METRICS = [
 
 
 @dataclass
-class Baseline:
+class BiLSTM:
     # required args
     args: Namespace
     partial_path: str
