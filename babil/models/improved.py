@@ -52,26 +52,48 @@ class Improved:
 
         self.callbacks = [
             EarlyStopping(
-                monitor='val_loss',
-                min_delta=0.01,
-                patience=3,
-                verbose=2
+                monitor='fp',
+                patience=5,
+                verbose=1
             ),
             EarlyStopping(
-                monitor='val_accuracy',
-                min_delta=0.01,
-                patience=3,
-                verbose=2
+                monitor='fn',
+                patience=5,
+                verbose=1
+            ),
+            EarlyStopping(
+                monitor='val_loss',
+                min_delta=0.1,
+                patience=5,
+                verbose=1
+            ),
+            # EarlyStopping(
+            #     monitor='val_accuracy',
+            #     min_delta=0.1,
+            #     patience=5,
+            #     verbose=2
+            # ),
+            ModelCheckpoint(
+                filepath=f'{self.partial_path}_model_checkpoint._fph5',
+                monitor='fp',
+                save_format='h5',
+                save_best_only=True,
             ),
             ModelCheckpoint(
-                filepath=f'{self.partial_path}_model_checkpoint.h5',
+                filepath=f'{self.partial_path}_model_checkpoint_fn.h5',
+                monitor='fn',
+                save_format='h5',
+                save_best_only=True,
+            ),
+            ModelCheckpoint(
+                filepath=f'{self.partial_path}_model_checkpoint_val_loss.h5',
                 monitor='val_loss',
                 save_format='h5',
                 save_best_only=True,
             ),
             ReduceLROnPlateau(
                 monitor='val_loss',
-                factor=0.2,
+                factor=0.1,
                 patience=5,
                 min_lr=1e-3,
                 verbose=1
@@ -135,7 +157,7 @@ class Improved:
     def summary(self):
         return self.model.summary()
 
-    def train(self, X_train, y_train, X_dev, y_dev, class_weights) -> None:
+    def train(self, X_train, y_train, X_dev, y_dev) -> None:
         """Train model."""
         self.results = self.model.fit(
             X_train, y_train,
@@ -145,7 +167,8 @@ class Improved:
             shuffle=True,
             verbose=2,
             callbacks=self.callbacks,
-            class_weights=class_weights
+            # ValueError: `class_weight` not supported for 3+ dimensional targets.
+            # class_weight=class_weights
         )
 
     def save(self) -> None:
