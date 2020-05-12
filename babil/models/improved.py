@@ -54,12 +54,14 @@ class Improved:
             EarlyStopping(
                 monitor='fp',
                 patience=5,
-                verbose=1
+                verbose=1,
+                mode='min'
             ),
             EarlyStopping(
                 monitor='fn',
                 patience=5,
-                verbose=1
+                verbose=1,
+                mode='min'
             ),
             EarlyStopping(
                 monitor='val_loss',
@@ -74,18 +76,6 @@ class Improved:
             #     verbose=2
             # ),
             ModelCheckpoint(
-                filepath=f'{self.partial_path}_model_checkpoint._fph5',
-                monitor='fp',
-                save_format='h5',
-                save_best_only=True,
-            ),
-            ModelCheckpoint(
-                filepath=f'{self.partial_path}_model_checkpoint_fn.h5',
-                monitor='fn',
-                save_format='h5',
-                save_best_only=True,
-            ),
-            ModelCheckpoint(
                 filepath=f'{self.partial_path}_model_checkpoint_val_loss.h5',
                 monitor='val_loss',
                 save_format='h5',
@@ -93,7 +83,7 @@ class Improved:
             ),
             ReduceLROnPlateau(
                 monitor='val_loss',
-                factor=0.1,
+                factor=0.2,
                 patience=5,
                 min_lr=1e-3,
                 verbose=1
