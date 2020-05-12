@@ -20,5 +20,7 @@ EMBEDDINGS = {
     '94.zip': 'Gensim Continuous Bag-of-Words: NNC, dim=100',
     '96.zip': 'Gensim Continuous Bag-of-Words: NoWaC, dim=100',
     '58.zip': 'Word2Vec Continuous Skipgram:  Norwegian-Bokmaal CoNLL17 corpus, dim=100',
-    'ndt.cbow.100.bin': 'fastText Continuous Bag-of-Words: NDT, dim=100'
+    'ndt.cbow.100.bin': 'fastText Continuous Bag-of-Words: NDT, dim=100',
+    'norec_ndt_plus.cbow.300.bin': 'fastText Continuous Bag-of-Words: NoReC + NDT, dim=300',
+    'norec_ndt_plus.sg.300.bin': 'fastText Skipgram: NoReC + NDT, dim=300'
 }

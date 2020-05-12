@@ -3,23 +3,6 @@
 
 from argparse import ArgumentParser, Namespace
 from dataclasses import dataclass, field
-from typing import List, Tuple
-
-
-def get_filenames(args: Namespace) -> Tuple[str, str]:
-    """String together (ha!) filenames for model and logger."""
-    strings: List[str] = [
-        args.name,
-        'sg' if args.sg else 'cbow',
-        f'{args.dim}',
-        'bin'
-    ]
-    model_name = '.'.join(strings)
-    log_name = '-'.join(strings[:-1])
-
-    if args.zip:
-        model_name = log_name
-    return model_name, f'{log_name}.log'
 
 
 @dataclass
@@ -46,7 +29,8 @@ class ArgParser:
             '--target',
             action='store',
             type=str,
-            help='The directory in which to save the model.'
+            help='The directory in which to save the model. Defaults to the'
+                 'path to embeddings in the json config file if not provided.'
         )
         parser.add_argument(
             '--name', '-n',
@@ -100,4 +84,9 @@ class ArgParser:
             action='store_true',
             help='Toggle this to save both model and vectors in a '
                  'compressed archive rather than only the model itself.'
+        )
+        parser.add_argument(
+            '--saga',
+            action='store_true',
+            help='Toggle if running on Saga.'
         )

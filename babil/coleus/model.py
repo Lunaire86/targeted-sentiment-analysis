@@ -10,10 +10,10 @@ from gensim.models.word2vec import PathLineSentences
 
 
 @dataclass
-class Model(FastText):
+class FastTextModel(FastText):
 
     def __init__(self, **kwargs):
-        super(Model, self).__init__(**kwargs)
+        super(FastTextModel, self).__init__(**kwargs)
 
     @staticmethod
     def init(args: Namespace):
@@ -54,15 +54,15 @@ class Model(FastText):
             'sorted_vocab': 1,
 
             # Target size (in words) for batches of examples passed to worker threads.
-            'batch_words': 3000
+            'batch_words': 6000
         }
-        model = Model(**init_kwargs)
+        model = FastTextModel(**init_kwargs)
         model.build_vocab(PathLineSentences(args.source))
 
         return model
 
     def train(self, *args, **kwargs):
-        super(Model, self).train(
+        super(FastTextModel, self).train(
             # Path to a corpus file in LineSentence format
             PathLineSentences(args[0]),
 
@@ -79,3 +79,8 @@ class Model(FastText):
             # Number of iterations (epochs) over the corpus.
             epochs=self.epochs
         )
+
+    @classmethod
+    def load_fasttext_format(cls, model_file, encoding='latin1'):
+        return super().load_fasttext_format(model_file, encoding)
+
