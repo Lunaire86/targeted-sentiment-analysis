@@ -1,13 +1,19 @@
-@article{NoReC_fine,
-    abstract =      {"We introduce NoReC_fine, a dataset for fine-grained sentiment analysis in Norwegian, annotated with respect to polar expressions, targets and holders of opinion.
-                    The underlying texts are taken from a corpus of professionally authored reviews from multiple news-sources and across a wide variety of domains, including literature, games, music, products, movies and more.
-                    We here present a detailed description of this annotation effort.
-                    We provide an overview of the developed annotation guidelines, illustrated with examples, and present an analysis of inter-annotator agreement.
-                    We also report the first experimental results on the dataset, intended as a preliminary benchmark for further experiments."},
-    year =          2019,
+@article{norec_fine,
     title =         {A Fine-Grained Sentiment Dataset for Norwegian},
     author =        {Øvrelid, Lilja and Mæhlum, Petter and Barnes, Jeremy and Velldal, Erik},
+    year =          {2019},
     keywords =      {Computer Science - Computation And Language},
+
+    abstract =      {We introduce NoReC_fine, a dataset for fine-grained sentiment analysis in Norwegian, annotated with respect to polar expressions, targets and holders of opinion. The underlying texts are taken from a corpus of professionally authored reviews from multiple news-sources and across a wide variety of domains, including literature, games, music, products, movies and more. We here present a detailed description of this annotation effort. We provide an overview of the developed annotation guidelines, illustrated with examples, and present an analysis of inter-annotator agreement. We also report the first experimental results on the dataset, intended as a preliminary benchmark for further experiments.}
+}
+
+@article{norec,
+    title =         {NoReC: The Norwegian Review Corpus},
+    author =        {Velldal, Erik and Øvrelid, Lilja and Bergem, Eivind Alexander and Stadsnes, Cathrine and Touileb, Samia and Jørgensen, Fredrik},
+    year =          {2017},
+    keywords =      {Computer Science - Computation And Language},
+
+    abstract =      {This paper presents the Norwegian Review Corpus (NoReC), created for training and evaluating models for document-level sentiment analysis. The full-text reviews have been collected from major Norwegian news sources and cover a range of different domains, including literature, movies, video games, restaurants, music and theater, in addition to product reviews across a range of categories. Each review is labeled with a manually assigned score of 1-6, as provided by the rating of the original author. This first release of the corpus comprises more than 35,000 reviews. It is distributed using the CoNLL-U format, pre-processed using UDPipe, along with a rich set of metadata. The work reported in this paper forms part of the SANT initiative (Sentiment Analysis for Norwegian Text), a project seeking to provide resources and tools for sentiment analysis and opinion mining for Norwegian. As resources for sentiment analysis have so far been unavailable for Norwegian, NoReC represents a highly valuable and sought-after addition to Norwegian language technology.}
 }
 
 @inproceedings{mitchell-etal-2013-open,
@@ -17,11 +23,94 @@
                     Wilson, Theresa and
                     Van Durme, Benjamin},
     booktitle =     {Proceedings of the 2013 Conference on Empirical Methods in Natural Language Processing},
-    month =         oct,
-    year =          2013,
+    month =         {oct},
+    year =          {2013},
     address =       {Seattle, Washington, USA},
     publisher =     {Association for Computational Linguistics},
     url =           {https://www.aclweb.org/anthology/D13-1171},
     pages =         {1643-1654},
 }
 
+@Inbook{Ahmet2020,
+    author =        {Ahmet, Ahmed and Abdullah, Tariq},
+    editor =        {Agarwal, Basant and Nayak, Richi and Mittal, Namita and Patnaik, Srikanta},
+    title =         {Recent Trends and Advances in Deep Learning-Based Sentiment Analysis},
+    bookTitle =     {Deep Learning-Based Approaches for Sentiment Analysis},
+    year =          {2020},
+    publisher =     {Springer Singapore},
+    address =       {Singapore},
+    pages =         {33--56},
+    isbn =          {978-981-15-1216-2},
+    doi =           {10.1007/978-981-15-1216-2_2},
+    url =           {https://doi.org/10.1007/978-981-15-1216-2_2},
+
+    abstract =      {Sentiment analysis is a fundamental branch of natural language processing. It is an essential task of identifying and extracting sentiment in opinionated data from sources such as social media, product feedback or blogs. Deep learning-based approaches have exceeded human-level performance in areas such as computer vision and speech recognition. Deep learning is widely accepted as the most promising in machine learning. In this chapter, we survey and analyse the current trends and advances in deep learning-based sentiment analysis approaches for document-level, sentence-level and aspect-based sentiment analysis for short and long text. A detailed discussion of deep learning architectures for sentiment analysis is provided. The studied approaches are classified into coarse-grain (including document and sentence level), fine-grain (includes target and aspect level) and cross-domain. Lastly, we provide a summary and in-depth analysis of the surveyed studies, for each of the aforementioned categories. The overwhelming number of studies explored convolutional neural networks (CNNs), long short-term memory (LSTM), gated recurrent unit (GRU) and attention mechanism. For coarse-grain sentiment analysis, LSTM and CNN-based models compete on performance, but it is CNNs that offer reduced model complexity and training overhead. Fine-grain sentiment analysis requires a model to learn complex interactions between target/aspect words and opinion words. Bi-directional LSTM and attention mechanisms offer the most promise, although CNN-based models have been adept at aspect extraction. The efforts in cross-domain sentiment analysis are dominated by LSTM and attention models. Our survey of cross-domain approaches revealed the use of multitask learning, adversarial training and joint training for domain adaptation.}
+}
+
+@book{neural-nlp,
+    Author =        {Goldberg, Yoav},
+    ISBN =          {9781627052986},
+    Number =        {Vol. 37},
+    Publisher =     {Morgan & Claypool Publishers},
+    Series =        {Synthesis Lectures on Human Language Technologies},
+    Title =         {Neural Network Methods in Natural Language Processing.},
+    URL =           {http://search.ebscohost.com.ezproxy.uio.no/login.aspx?direct=true&db=nlebk&AN=1506512&site=ehost-live},
+    Year =          {2017},
+
+    Abstract =      {Neural networks are a family of powerful machine learning models. This book focuses on the application of neural network models to natural language data. The first half of the book (Parts I and II) covers the basics of supervised machine learning and feed-forward neural networks, the basics of working with machine learning over language data, and the use of vector-based rather than symbolic representations for words. It also covers the computation-graph abstraction, which allows to easily define and train arbitrary neural networks, and is the basis behind the design of contemporary neural network software libraries. The second part of the book (Parts III and IV) introduces more specialized neural network architectures, including 1D convolutional neural networks, recurrent neural networks, conditioned-generation models, and attention-based models. These architectures and techniques are the driving force behind state-of-the-art algorithms for machine translation, syntactic parsing, and many other applications.}
+}
+
+@misc{func-api,
+    author =        {{TensorFlow}},
+    title =         {The Keras functional API},
+    url =           {https://www.tensorflow.org/guide/keras/functional},
+    accessed =      {11.05.2020}
+}
+
+@misc{tensorflow2015-whitepaper,
+title =             { {TensorFlow}: Large-Scale Machine Learning on Heterogeneous Systems},
+url =               {https://www.tensorflow.org/},
+note =              {Software available from tensorflow.org},
+author =            {
+    Mart\'{\i}n~Abadi and
+    Ashish~Agarwal and
+    Paul~Barham and
+    Eugene~Brevdo and
+    Zhifeng~Chen and
+    Craig~Citro and
+    Greg~S.~Corrado and
+    Andy~Davis and
+    Jeffrey~Dean and
+    Matthieu~Devin and
+    Sanjay~Ghemawat and
+    Ian~Goodfellow and
+    Andrew~Harp and
+    Geoffrey~Irving and
+    Michael~Isard and
+    Yangqing Jia and
+    Rafal~Jozefowicz and
+    Lukasz~Kaiser and
+    Manjunath~Kudlur and
+    Josh~Levenberg and
+    Dandelion~Man\'{e} and
+    Rajat~Monga and
+    Sherry~Moore and
+    Derek~Murray and
+    Chris~Olah and
+    Mike~Schuster and
+    Jonathon~Shlens and
+    Benoit~Steiner and
+    Ilya~Sutskever and
+    Kunal~Talwar and
+    Paul~Tucker and
+    Vincent~Vanhoucke and
+    Vijay~Vasudevan and
+    Fernanda~Vi\'{e}gas and
+    Oriol~Vinyals and
+    Pete~Warden and
+    Martin~Wattenberg and
+    Martin~Wicke and
+    Yuan~Yu and
+    Xiaoqiang~Zheng},
+  year={2015},
+}
