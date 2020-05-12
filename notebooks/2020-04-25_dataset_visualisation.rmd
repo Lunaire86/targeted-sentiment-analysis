@@ -122,7 +122,7 @@ ggplot(train, aes(x = polarity, y = target, color = tag)) +
 ```
 
 ```{r}
-df = read.delim('/home/fero/Desktop/in5550_exam/report/data/embeddings.tsv')
+df = read.delim('/report/data/model_scores_partial.tsv')
 summary(df); cat('\n')
 str(df)
 

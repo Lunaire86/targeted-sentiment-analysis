@@ -1,0 +1,58 @@
+---
+title: 'TITLE'
+author: 'Maria Singstad Paulsen'
+date: '`r format(Sys.Date(), "%Y-%B-%d")`'
+output:
+    pdf_document:
+        fig_width: 5
+        fig_height: 3.5
+        df_print: kable
+        highlight: tango
+        # default tango pygments kate monochrome espresso zenburn haddock breezedark
+    fontsize: 12pt
+    # highlight: atelier forest light
+    # highlight: solar
+
+    # LaTeX stuff
+    # documentclass: scrartcl
+    header-includes:
+        - \usepackage{amsmath}
+        - \usepackage{xcolor}
+        - \usepackage{bm}
+
+        # The following lines lets us use the Chancery font with its size altered
+        - \DeclareFontFamily{OT1}{pzc}{}
+        - \DeclareFontShape{OT1}{pzc}{m}{it}{<->s*[1.2] pzcmi7t}{}
+        - \DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+        # - \usepackage[dvipsnames]{xcolor}
+---
+
+# Top level headline
+## Next level headline (hehehe)
+
+**This is bold text**
+*and this is italic text*
+
+### A list is written as follows
+* item 1 (`* ' ' text`)
+  * item 1.1 (`'  ' * ' ' text`)
+    * item 1.1.1 (`'    ' * ' ' text`)
+* item 2
+  * item 2.1
+
+If we want an inline equation, we use single `$ ... $` like so: $\{x,\,2x,\,|\,x \in \mathbb{N}\}$, and if we want the big ass one, we use the double dollaz `$$ ... $$`. \LaTeX-style, in other words. It's also possible to use the newer versions: `\( ... \)` for inline equations and `\[ ... \]` for centered equations. Mixing the two styles is fine as long as consistency between inline and centered equations is kept. I.e., using `$ ... $` and `\[ ... \]`, but sticking to each of them throughout.
+
+$$ \sum_{i=1}^{N}\binom{N}{i}\,,\quad N=10 $$
+
+\[ \sum_{i=1}^{N}\binom{N}{i}\,,\quad N=10 \]
+
+Add extra linespace using the `\medskip` (LaTeX) command:
+
+\medskip
+
+
+...and even more with the `\bigskip` command:
+
+\bigskip
+
+If we want to continue on a new page, we use the `\newpage` command, like so: \newpage
