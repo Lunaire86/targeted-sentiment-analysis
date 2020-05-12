@@ -13,9 +13,10 @@ import numpy as np
 import tensorflow as tf
 from gensim.models.fasttext import FastTextKeyedVectors, FastText
 from gensim.models.keyedvectors import Word2VecKeyedVectors
-from sklearn.utils import compute_class_weight
+
 
 import features
+from coleus.model import FastTextModel
 from data.preprocessing import Dataset, LabelTokeniser, WordTokeniser, vectorise
 from features import EMBEDDINGS
 from features import embeddings
@@ -86,23 +87,28 @@ def _load_for_training(path: str, name: str, logger) -> FastText:
     raise NotImplementedError('Most unfortunate...')
 
 
-def load_embeddings(path: str, name: str, train: bool, logger: Logger) -> Optional[Union[FastTextKeyedVectors, Word2VecKeyedVectors]]:
+def load_embeddings(path: str, name: str, train: bool, logger: Logger) -> Optional[Union[FastTextModel, FastTextKeyedVectors, Word2VecKeyedVectors]]:
 
-    model: Optional[Union[FastTextKeyedVectors, Word2VecKeyedVectors, FastText, Any]] = None
+    model: Optional[Union[FastTextModel, FastTextKeyedVectors, Word2VecKeyedVectors, FastText, Any]] = None
     s = f'Loading embeddings: {EMBEDDINGS[name]}'
     print(s, '\n')
     logger.info(s)
 
     try:
-        model = _load_for_training(path, name, logger) if train else embeddings.load(path, name)
+        model = embeddings.load(path, name)
+
     except Exception as e:
         logger.error(e)
+
         try:
-            model = embeddings.load_gensim_model(path, ext='txt')
+            model = FastTextModel.load(path)
+
         except Exception as e:
             logger.error(e)
             raise RuntimeError('Failed to load embeddings!')
 
+    # model = embeddings.load(path, name) if not train else _load_for_training(path, name, logger)
+    # model = embeddings.load_gensim_model(path, ext='txt')
     logger.info(f'Embeddings loaded: {model}')
     return model
 
@@ -375,12 +381,10 @@ def improved_trainer(parsed_args: Namespace, paths: PathTracker, logger: Logger)
     # Build and train a model
     model = improved.BiLSTM(args, partial_path, weights)
     model.build()
-    train_model(model, logger, X_train, y_train, X_dev, y_dev)
+    train_model(model, X_train, y_train, X_dev, y_dev, logger)
 
     # Get predictions
     predictions = model.predict(X_dev)
-
-
 
     metrics = Metrics(X_dev, y_dev, predictions, label_tokeniser.index_word)
     print_report(metrics, _ID_, logger)
