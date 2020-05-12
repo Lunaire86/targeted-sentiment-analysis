@@ -5,6 +5,7 @@ import logging
 
 import matplotlib as mpl
 
+import coleus
 from models import run
 from utils.config import ArgParser, PathTracker, set_global_seed
 
@@ -38,9 +39,11 @@ if __name__ == '__main__':
     if args.run == 'baseline':
         print(f'{s}\nBASELINE\n{s}')
         logger.info(f'\n{"~" * 40} NEW JOB - BASELINE {"~" * 40}\n')
-        run.baseline(args, paths, logger)
+        run.baseline_trainer(args, paths, logger)
 
     elif args.run == 'improved':
         print(f'{s}\nIMPROVED\n{s}')
         logger.info(f'\n{"~" * 40} NEW JOB - IMPROVED {"~" * 40}\n')
-        run.improved(args, paths, logger)
+        run.improved_trainer(args, paths, logger)
+
+
