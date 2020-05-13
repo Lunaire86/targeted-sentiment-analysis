@@ -3,11 +3,11 @@
 # notebooks/develop/
 
 # Project specific folder
-embeddings/*bin
+#embeddings/*bin
 embeddings/*txt
 embeddings/*vec
 models/*h5
-precode
+precode/*
 
 # Project specific files
 batch.sh
